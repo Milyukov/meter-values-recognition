@@ -1,0 +1,78 @@
+[
+    {
+        "input_values": {
+            "image": "https://i.ibb.co/y0Mc5Wn/3203888.jpg"
+        },
+        "output_values": {
+            "result_types": "analog",
+            "result_points": [
+                {
+                    "shape": "point",
+                    "left": 0.21997678166346665,
+                    "top": 0.46803788726291695
+                },
+                {
+                    "shape": "point",
+                    "left": 0.5450108882586122,
+                    "top": 0.472265973202366
+                },
+                {
+                    "shape": "point",
+                    "left": 0.540254291576732,
+                    "top": 0.52088896150603
+                },
+                {
+                    "shape": "point",
+                    "left": 0.21839124943617327,
+                    "top": 0.5145468325968564
+                }
+            ]
+        }
+    },
+    {
+        "input_values": {
+            "image": "https://i.ibb.co/1vMJK14/3202399.jpg"
+        },
+        "output_values": {
+            "result_types": "illegible"
+        }
+    },
+    {
+        "input_values": {
+            "image": "https://i.ibb.co/bFbTWGr/3201821.jpg"
+        },
+        "output_values": {
+            "result_points": [
+                {
+                    "shape": "point",
+                    "left": 0.3287866556373796,
+                    "top": 0.4593383654838366
+                },
+                {
+                    "shape": "point",
+                    "left": 0.6414007597853935,
+                    "top": 0.4687094674348778
+                },
+                {
+                    "shape": "point",
+                    "left": 0.6414007597853935,
+                    "top": 0.5624204869452895
+                },
+                {
+                    "shape": "point",
+                    "left": 0.3287866556373796,
+                    "top": 0.558672046164873
+                }
+            ],
+            "result_types": "digital"
+        }
+    },
+    {
+        "input_values": {
+            "image": "https://invalid_url.jpg"
+        },
+        "output_values": {
+            "result_types": "_404"
+        }
+    }
+]

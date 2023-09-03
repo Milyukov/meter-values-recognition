@@ -1,0 +1,90 @@
+{
+    "view": {
+        "type": "view.list",
+        "items": [
+            {
+                "type": "field.image-annotation",
+                "image": {
+                    "type": "data.input",
+                    "path": "image"
+                },
+                "fullHeight": true,
+                "data": {
+                    "type": "data.output",
+                    "path": "result_points"
+                },
+                "validation": {
+                    "type": "condition.required",
+                    "hint": "Please select an area"
+                },
+                "shapes": {
+                    "point": true
+                }
+            },
+            {
+                "type": "field.button-radio-group",
+                "label": "What type meter do you see?",
+                "options": [
+                    {
+                        "label": "Digital",
+                        "value": "digital"
+                    },
+                    {
+                        "label": "Analog",
+                        "value": "analog"
+                    },
+                    {
+                        "label": "Failed to load",
+                        "value": "_404"
+                    }
+                ],
+                "data": {
+                    "type": "data.output",
+                    "path": "result_types"
+                },
+                "validation": {
+                    "type": "condition.required"
+                }
+            }
+        ]
+    },
+    "plugins": [
+        {
+            "type": "plugin.toloka",
+            "layout": {
+                "kind": "pager"
+            }
+        },
+        {
+            "1": {
+                "type": "action.set",
+                "data": {
+                    "type": "data.output",
+                    "path": "result"
+                },
+                "payload": "digital"
+            },
+            "2": {
+                "type": "action.set",
+                "data": {
+                    "type": "data.output",
+                    "path": "result"
+                },
+                "payload": "analog"
+            },
+            "3": {
+                "type": "action.set",
+                "data": {
+                    "type": "data.output",
+                    "path": "result"
+                },
+                "payload": "_404"
+            },
+            "type": "plugin.hotkeys"
+        },
+        {
+            "type": "plugin.field.image-annotation.hotkeys"
+        }
+    ],
+    "vars": {}
+}
