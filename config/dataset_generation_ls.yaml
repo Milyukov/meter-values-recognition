@@ -1,0 +1,7 @@
+stage1:
+  path_to_ls_output: ./config/label_studio_output_example.json
+  path_to_images: C:/Users/cvres/Datasets/Meter
+  height: 1028
+  width: 1028
+  path_to_output: ./output
+  visualize: False
