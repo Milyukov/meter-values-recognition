@@ -131,52 +131,10 @@ def prepare_image(image):
     image = tf.keras.applications.resnet.preprocess_input(image)
     return tf.expand_dims(image, axis=0), ratio
 
-# for epoch in range(epochs):
-#     print('Memory usage on epoch begin: {}'.format(psutil.Process(os.getpid()).memory_info().rss))
-
-#     # Iterate over the batches of the dataset.
-#     for step, example in enumerate(train_dataset):
-#         images, bboxes, cls = preprocess_data(example)
-#         images = tf.expand_dims(images, 0)
-#         bboxes = tf.expand_dims(bboxes, 0)
-#         cls = tf.expand_dims(cls, 0)
-#         x_batch_train, y_batch_train = label_encoder.encode_batch(images, bboxes, cls)
-#         # Open a GradientTape to record the operations run
-#         # during the forward pass, which enables auto-differentiation.
-#         with tf.GradientTape() as tape:
-#             # Run the forward pass of the layer.
-#             # The operations that the layer applies
-#             # to its inputs are going to be recorded
-#             # on the GradientTape.
-#             predictions = model(x_batch_train, training=True)  # Logits for this minibatch
-
-#             # Compute the loss value for this minibatch.
-#             loss_value = loss_fn(y_batch_train, predictions)
-
-#         # Use the gradient tape to automatically retrieve
-#         # the gradients of the trainable variables with respect to the loss.
-#         grads = tape.gradient(loss_value, model.trainable_weights)
-
-#         # Run one step of gradient descent by updating
-#         # the value of the variables to minimize the loss.
-#         optimizer.apply_gradients(zip(grads, model.trainable_weights))
-
-#         print('Memory usage on epoch end:   {}'.format(psutil.Process(os.getpid()).memory_info().rss))
-
-#         # Log every 200 batches.
-#         if step % 200 == 0:
-#             print(
-#                 "Training loss (for one batch) at step %d: %.4f"
-#                 % (step, float(loss_value))
-#             )
-#             print("Seen so far: %s samples" % ((step + 1) * batch_size))
-
 # model.save('./data/model.keras')
 
 # Change this to `model_dir` when not using the downloaded weights
 #weights_dir = "data"
-weights_dir = "./data/"
-
 #latest_checkpoint = tf.train.latest_checkpoint(weights_dir)
 #model.load_weights(latest_checkpoint)
 # model = keras.models.load_model('./data/model.keras')
@@ -185,8 +143,6 @@ image = tf.keras.Input(shape=[None, None, 3], name="image")
 predictions = model(image, training=False)
 detections = DecodePredictions(confidence_threshold=0.5)(image, predictions)
 inference_model = tf.keras.Model(inputs=image, outputs=detections)
-
-
 
 
 # val_dataset = tfds.load("coco/2017", split="validation", data_dir="data")
