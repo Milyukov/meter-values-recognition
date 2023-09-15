@@ -56,9 +56,14 @@ def process_keypoints(im, keypoints, width, height):
     # sort keypoints: top-left, top-right, bottom-rightm bottom-left
     keypoints = sort_keypoints(keypoints)
     # resize image and keypoints
-    im_resized, keypoints = resize_image(im, keypoints, width, height)
+    im_resized, keypoints_resized = resize_image(im, keypoints, width, height)
     # create bounding box
-    bbox = cv2.boundingRect(keypoints.astype(np.int32))
+    bbox = cv2.boundingRect(keypoints_resized.astype(np.int32))
+    bbox = np.array(bbox)
+    return im_resized, bbox, keypoints_resized 
+    
+
+def extract_rectangle_area(im_resized, bbox, keypoints):
     # evaluate homography transform to warp and crop image inside keypoints
     # crop keypoints coordinates
     x_min = np.min(keypoints[:, 0])
@@ -69,7 +74,25 @@ def process_keypoints(im, keypoints, width, height):
     height = bbox[3]
     keypoints_planar = np.array([[0, 0], [width, 0], [width, height], [0, height]], dtype=np.int32)
     h, status = cv2.findHomography(keypoints.astype(np.int32), keypoints_planar)
+
+    # enhance area
+    keypoints_planar_extended = keypoints_planar + np.array(
+        [[-height//2, -2 * height//3], 
+         [height//2, -2 * height//3], 
+         [height//2, 2 * height//3], 
+         [-height//2, 2 * height//3]])
+    # use inverse homography to choose new points on the original image
+    keypoints_planar_extended = keypoints_planar_extended.reshape(-1,1,2).astype(np.float32)
+    keypoints_extended = cv2.perspectiveTransform(keypoints_planar_extended, h)
+    keypoints_extended = keypoints_extended.reshape(-1, 2)
+    keypoints_extended[:, 0] += x_min
+    keypoints_extended[:, 1] += y_min
+    # get bbox
+    bbox = cv2.boundingRect(keypoints_extended.astype(np.int32))
+    width = bbox[2]
+    height = bbox[3]
+    # warp image area
     im_dst = cv2.warpPerspective(im_resized[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]], h, (width, height))
     im_dst = cv2.cvtColor(im_dst, cv2.COLOR_BGR2GRAY)
     im_dst_eq = cv2.equalizeHist(im_dst)
-    return bbox, im_resized, im_dst, im_dst_eq
+    return im_dst_eq

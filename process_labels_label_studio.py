@@ -4,16 +4,11 @@ from copy import deepcopy
 import json
 import os
 import matplotlib.pyplot as plt
-import numpy as np
 from utils import *
 import yaml
 
 
-def parse_labels(config):
-    input_path = config['path_to_ls_output']
-    images_path = config['path_to_images']
-    output_path = config['path_to_output']
-    vis = config['visualize']
+def generate_examples(input_path, images_path, width, height):
     with open(input_path) as f:
         images_info = json.load(f)
     # for json file
@@ -26,34 +21,29 @@ def parse_labels(config):
         # read keypoints
         annotations = image_info['annotations']
         keypoints = []
+        labels = []
         for field in annotations:
             for result in field['result']:
-                if result['type'] == 'keypointlabels':
+                if result['type'] == 'polygonlabels':
                     w = result['original_width']
                     h = result['original_height']
                     values = result['value']
-                    keypoints.append([
-                        values['x'] * w / 100, 
-                        values['y'] * h / 100])
+                    labels.append(values['polygonlabels'][0])
+                    for point in values['points']:
+                        x = point[0]
+                        y = point[1]
+                        keypoints.append([
+                            x * w / 100, 
+                            y * h / 100])
         if len(keypoints) == 0:
             continue
 
-        bbox, im_resized, im_dst, im_dst_eq = process_keypoints(
-            im, keypoints, config['width'], config['height'])
+        im_resized, bbox, keypoints = process_keypoints(
+            im, keypoints, width, height)
+        
+        yield im_resized, labels, bbox, keypoints
 
-        # save generated image
-        cv2.imwrite(os.path.join(output_path, f'cropped_{image_filename}'), im_dst_eq)
-
-        if vis:
-            im_vis = deepcopy(im_resized)
-            cv2.rectangle(im_vis, bbox, (255, 0, 0))
-            plt.imshow(im_vis)
-            plt.show()
-            plt.subplot(121)
-            plt.imshow(im_dst)
-            plt.subplot(122)
-            plt.imshow(im_dst_eq)
-            plt.show()
+        
 
 if __name__ == '__main__':
     argParser = argparse.ArgumentParser()
@@ -61,4 +51,27 @@ if __name__ == '__main__':
     args = argParser.parse_args()
     with open(args.config, 'r') as f:
         config = yaml.safe_load(f)
-    parse_labels(config['stage1'])
+    index = 0
+    # read dataset parameters
+    input_path = config['stage1']['path_to_ls_output']
+    images_path = config['stage1']['path_to_images']
+    width, height = config['stage1']['width'], config['stage1']['height']
+    # generate dataset stage 2
+    for im_resized, labels, bbox, keypoints in generate_examples(input_path, images_path, width, height):
+        # generate image for stage 2
+        im_dst_eq = extract_rectangle_area(im_resized, bbox, keypoints)
+        # save generated image
+        image_filename = f'{index:05d}.jpg'
+        index += 1
+        cv2.imwrite(os.path.join(config['stage1']['path_to_output'], f'cropped_{image_filename}'), im_dst_eq)
+
+        if config['stage1']['visualize']:
+            # visualize bbox
+            im_vis = deepcopy(im_resized)
+            cv2.rectangle(im_vis, bbox, (255, 0, 0))
+            # construct figure
+            fig, axs = plt.subplots(1, 2, constrained_layout=True)
+            fig.suptitle(labels[0])
+            axs[0].imshow(im_vis)
+            axs[1].imshow(im_dst_eq)
+            plt.show()
