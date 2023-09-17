@@ -74,7 +74,7 @@ if __name__ == '__main__':
     ]
 
     (train_dataset, val_dataset), dataset_info = tfds.load(
-        "meter_values_dataset", split=["train", "test"], with_info=True, data_dir="/home/gleb/tensorflow_datasets",
+        "meter_values_dataset_stage1", split=["train", "test"], with_info=True, data_dir="/home/gleb/tensorflow_datasets",
         read_config=tfds.ReadConfig(try_autocache=False)
     )
 

@@ -1,7 +1,7 @@
 import tensorflow_datasets as tfds
 
-from data_processing import LabelEncoder, preprocess_data
-from model import *
+from data_processing_stage1 import LabelEncoder, preprocess_data
+from model_stage1 import *
 
 import datetime
 import multiprocessing
@@ -19,7 +19,7 @@ def run(queue, run_dir, hparams):
     label_encoder = LabelEncoder()
     batch_size = 1
     train_dataset, dataset_info = tfds.load(
-        "meter_values_dataset", split=["train"], with_info=True, data_dir="/home/gleb/tensorflow_datasets",
+        "meter_values_dataset_stage1", split=["train"], with_info=True,
         read_config=tfds.ReadConfig(try_autocache=False)
     )
     train_dataset = train_dataset[0]

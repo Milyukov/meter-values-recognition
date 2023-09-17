@@ -1,12 +1,12 @@
-"""meter_values_dataset dataset."""
+"""meter_values_dataset_stage1 dataset."""
 
-from . import meter_values_dataset_dataset_builder
+from . import meter_values_dataset_stage1_dataset_builder
 import tensorflow_datasets as tfds
 
-class MeterValuesDatasetTest(tfds.testing.DatasetBuilderTestCase):
-  """Tests for meter_values_dataset dataset."""
-  # TODO(meter_values_dataset):
-  DATASET_CLASS = meter_values_dataset_dataset_builder.Builder
+class MeterValuesDatasetStage1Test(tfds.testing.DatasetBuilderTestCase):
+  """Tests for meter_values_dataset_stage1 dataset."""
+  # TODO(meter_values_dataset_stage1):
+  DATASET_CLASS = meter_values_dataset_stage1_dataset_builder.Builder
   SPLITS = {
       'train': 3,  # Number of fake train example
       'test': 1,  # Number of fake test example

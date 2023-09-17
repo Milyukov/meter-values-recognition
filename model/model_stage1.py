@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as ttf
 from tensorflow import keras
 
-from utils import *
+from utils_stage1 import *
 
 def get_backbone():
     """Builds ResNet50 with pre-trained imagenet weights"""
