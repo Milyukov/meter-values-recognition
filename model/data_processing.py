@@ -15,8 +15,10 @@ def random_flip_horizontal(image, boxes):
     """
     if tf.random.uniform(()) > 0.5:
         image = tf.image.flip_left_right(image)
+        # needs modification for 6-point case
         boxes = tf.stack(
-            [1 - boxes[:, 2], boxes[:, 1], 1 - boxes[:, 0], boxes[:, 3]], axis=-1
+            [1 - boxes[:, 2], boxes[:, 1], 
+             1 - boxes[:, 0], boxes[:, 3],], axis=-1
         )
     return image, boxes
 
@@ -85,7 +87,7 @@ def preprocess_data(sample):
     bbox = swap_xy(sample["objects"]["bbox"])
     class_id = tf.cast(sample["objects"]["label"], dtype=tf.int32)
 
-    image, bbox = random_flip_horizontal(image, bbox)
+    #image, bbox = random_flip_horizontal(image, bbox)
     image, image_shape, _ = resize_and_pad_image(image)
 
     bbox = tf.stack(
@@ -94,6 +96,14 @@ def preprocess_data(sample):
             bbox[:, 1] * image_shape[0],
             bbox[:, 2] * image_shape[1],
             bbox[:, 3] * image_shape[0],
+            bbox[:, 4] * image_shape[1],
+            bbox[:, 5] * image_shape[0],
+            bbox[:, 6] * image_shape[1],
+            bbox[:, 7] * image_shape[0],
+            bbox[:, 8] * image_shape[1],
+            bbox[:, 9] * image_shape[0],
+            bbox[:, 10] * image_shape[1],
+            bbox[:, 11] * image_shape[0],
         ],
         axis=-1,
     )
@@ -115,7 +125,7 @@ class LabelEncoder:
     def __init__(self):
         self._anchor_box = AnchorBox()
         self._box_variance = tf.convert_to_tensor(
-            [0.1, 0.1, 0.2, 0.2], dtype=tf.float32
+            [0.1, 0.1, 0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1], dtype=tf.float32
         )
 
     def _match_anchor_boxes(
@@ -151,7 +161,7 @@ class LabelEncoder:
           ignore_mask: A mask for anchor boxes that need to by ignored during
             training
         """
-        iou_matrix = compute_iou(anchor_boxes, gt_boxes)
+        iou_matrix = compute_iou(anchor_boxes, gt_boxes[:, :4])
         max_iou = tf.reduce_max(iou_matrix, axis=1)
         matched_gt_idx = tf.argmax(iou_matrix, axis=1)
         positive_mask = tf.greater_equal(max_iou, match_iou)
@@ -167,8 +177,12 @@ class LabelEncoder:
         """Transforms the ground truth boxes into targets for training"""
         box_target = tf.concat(
             [
-                (matched_gt_boxes[:, :2] - anchor_boxes[:, :2]) / anchor_boxes[:, 2:],
-                tf.math.log(matched_gt_boxes[:, 2:] / anchor_boxes[:, 2:]),
+                (matched_gt_boxes[:, :2] - anchor_boxes[:, :2]) / anchor_boxes[:, 2:4],
+                tf.math.log(matched_gt_boxes[:, 2:4] / anchor_boxes[:, 2:4]),
+                (matched_gt_boxes[:, 4:6] - anchor_boxes[:, :2]) / anchor_boxes[:, 2:4],
+                (matched_gt_boxes[:, 6:8] - anchor_boxes[:, :2]) / anchor_boxes[:, 2:4],
+                (matched_gt_boxes[:, 8:10] - anchor_boxes[:, :2]) / anchor_boxes[:, 2:4],
+                (matched_gt_boxes[:, 10:] - anchor_boxes[:, :2]) / anchor_boxes[:, 2:4],
             ],
             axis=-1,
         )
@@ -182,6 +196,7 @@ class LabelEncoder:
         matched_gt_idx, positive_mask, ignore_mask = self._match_anchor_boxes(
             anchor_boxes, gt_boxes
         )
+        # here's the error (8 points instead of 12)
         matched_gt_boxes = tf.gather(gt_boxes, matched_gt_idx)
         box_target = self._compute_box_target(anchor_boxes, matched_gt_boxes)
         matched_gt_cls_ids = tf.gather(cls_ids, matched_gt_idx)

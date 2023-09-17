@@ -7,11 +7,14 @@ import matplotlib.pyplot as plt
 from utils import *
 import yaml
 
-
-def generate_examples(input_path, images_path, width, height):
+def get_images_info(input_path):
+    images_info = []
     with open(input_path) as f:
         images_info = json.load(f)
-    # for json file
+    return images_info
+
+def generate_examples(images_info, images_path, width, height):
+    # for image
     for image_info in images_info:
         # read image
         image_filename = image_info['file_upload'].split('-')[-1]
@@ -57,7 +60,8 @@ if __name__ == '__main__':
     images_path = config['stage1']['path_to_images']
     width, height = config['stage1']['width'], config['stage1']['height']
     # generate dataset stage 2
-    for im_resized, labels, bbox, keypoints in generate_examples(input_path, images_path, width, height):
+    images_info = get_images_info(input_path)
+    for im_resized, labels, bbox, keypoints in generate_examples(images_info, images_path, width, height):
         # generate image for stage 2
         im_dst_eq = extract_rectangle_area(im_resized, bbox, keypoints)
         # save generated image

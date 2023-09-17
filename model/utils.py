@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
@@ -12,7 +13,14 @@ def swap_xy(boxes):
     Returns:
       swapped boxes with shape same as that of boxes.
     """
-    return tf.stack([boxes[:, 1], boxes[:, 0], boxes[:, 3], boxes[:, 2]], axis=-1)
+    return tf.stack([
+        boxes[:, 1], boxes[:, 0], 
+        boxes[:, 3], boxes[:, 2],
+        boxes[:, 5], boxes[:, 4], 
+        boxes[:, 7], boxes[:, 6], 
+        boxes[:, 9], boxes[:, 8], 
+        boxes[:, 11], boxes[:, 10]
+        ], axis=-1)
 
 
 def convert_to_xywh(boxes):
@@ -27,7 +35,7 @@ def convert_to_xywh(boxes):
       converted boxes with shape same as that of boxes.
     """
     return tf.concat(
-        [(boxes[..., :2] + boxes[..., 2:]) / 2.0, boxes[..., 2:] - boxes[..., :2]],
+        [(boxes[..., :2] + boxes[..., 2:4]) / 2.0, boxes[..., 2:4] - boxes[..., :2], boxes[..., 4:]],
         axis=-1,
     )
 
@@ -44,7 +52,7 @@ def convert_to_corners(boxes):
       converted boxes with shape same as that of boxes.
     """
     return tf.concat(
-        [boxes[..., :2] - boxes[..., 2:] / 2.0, boxes[..., :2] + boxes[..., 2:] / 2.0],
+        [boxes[..., :2] - boxes[..., 2:4] / 2.0, boxes[..., :2] + boxes[..., 2:4] / 2.0, boxes[..., 4:]],
         axis=-1,
     )
 
@@ -83,17 +91,21 @@ def visualize_detections(
     image = np.array(image, dtype=np.uint8)
     plt.figure(figsize=figsize)
     plt.axis("off")
-    plt.imshow(image)
     ax = plt.gca()
     #for box, _cls, score in zip(boxes, classes, scores):
     for box, score in zip(boxes, scores):
         # text = "{}: {:.2f}".format(_cls, score)
-        x1, y1, x2, y2 = box
-        w, h = x2 - x1, y2 - y1
-        patch = plt.Rectangle(
-            [x1, y1], w, h, fill=False, edgecolor=color, linewidth=linewidth
-        )
-        ax.add_patch(patch)
+        x1, y1, x2, y2, kpx1, kpy1, kpx2, kpy2, kpx3, kpy3, kpx4, kpy4 = box
+        # w, h = x2 - x1, y2 - y1
+        # patch = plt.Rectangle(
+        #     [x1, y1], w, h, fill=False, edgecolor=color, linewidth=linewidth
+        # )
+        image = cv2.rectangle(image, [np.int64(x1), np.int64(y1)], [np.int64(x2), np.int64(y2)], (0, 255, 0))
+        image = cv2.circle(image, [np.int64(kpx1), np.int64(kpy1)], 3, (0, 0, 255))
+        image = cv2.circle(image, [np.int64(kpx2), np.int64(kpy2)], 3, (0, 0, 255))
+        image = cv2.circle(image, [np.int64(kpx3), np.int64(kpy3)], 3, (0, 0, 255))
+        image = cv2.circle(image, [np.int64(kpx4), np.int64(kpy4)], 3, (0, 0, 255))
+        #ax.add_patch(patch)
         # ax.text(
         #     x1,
         #     y1,
@@ -102,6 +114,7 @@ def visualize_detections(
         #     clip_box=ax.clipbox,
         #     clip_on=True,
         # )
+    plt.imshow(image)
     plt.show()
     return ax
 

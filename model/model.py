@@ -112,7 +112,7 @@ class RetinaNet(keras.Model):
 
         prior_probability = tf.constant_initializer(-np.log((1 - 0.01) / 0.01))
         self.cls_head = build_head(9 * num_classes, prior_probability)
-        self.box_head = build_head(9 * 4, "zeros")
+        self.box_head = build_head(9 * 12, "zeros")
 
     def call(self, image, training=False):
         features = self.fpn(image, training=training)
@@ -120,7 +120,7 @@ class RetinaNet(keras.Model):
         cls_outputs = []
         box_outputs = []
         for feature in features:
-            box_outputs.append(tf.reshape(self.box_head(feature), [N, -1, 4]))
+            box_outputs.append(tf.reshape(self.box_head(feature), [N, -1, 12]))
             cls_outputs.append(
                 tf.reshape(self.cls_head(feature), [N, -1, self.num_classes])
             )
@@ -176,7 +176,7 @@ class DecodePredictions(tf.keras.layers.Layer):
 
         self._anchor_box = AnchorBox()
         self._box_variance = tf.convert_to_tensor(
-            [0.1, 0.1, 0.2, 0.2], dtype=tf.float32
+            [0.1, 0.1, 0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1], dtype=tf.float32
         )
 
     def _decode_box_predictions(self, anchor_boxes, box_predictions):
@@ -184,7 +184,11 @@ class DecodePredictions(tf.keras.layers.Layer):
         boxes = tf.concat(
             [
                 boxes[:, :, :2] * anchor_boxes[:, :, 2:] + anchor_boxes[:, :, :2],
-                tf.math.exp(boxes[:, :, 2:]) * anchor_boxes[:, :, 2:],
+                tf.math.exp(boxes[:, :, 2:4]) * anchor_boxes[:, :, 2:4],
+                boxes[:, :, 4:6] * anchor_boxes[:, :, 2:] + anchor_boxes[:, :, :2],
+                boxes[:, :, 6:8] * anchor_boxes[:, :, 2:] + anchor_boxes[:, :, :2],
+                boxes[:, :, 8:10] * anchor_boxes[:, :, 2:] + anchor_boxes[:, :, :2],
+                boxes[:, :, 10:] * anchor_boxes[:, :, 2:] + anchor_boxes[:, :, :2]
             ],
             axis=-1,
         )
@@ -194,19 +198,21 @@ class DecodePredictions(tf.keras.layers.Layer):
     def call(self, images, predictions):
         image_shape = tf.cast(tf.shape(images), dtype=tf.float32)
         anchor_boxes = self._anchor_box.get_anchors(image_shape[1], image_shape[2])
-        box_predictions = predictions[:, :, :4]
-        cls_predictions = tf.nn.sigmoid(predictions[:, :, 4:])
+        box_predictions = predictions[:, :, :12]
+        cls_predictions = tf.nn.sigmoid(predictions[:, :, 12:])
         boxes = self._decode_box_predictions(anchor_boxes[None, ...], box_predictions)
 
-        return tf.image.combined_non_max_suppression(
-            tf.expand_dims(boxes, axis=2),
-            cls_predictions,
-            self.max_detections_per_class,
-            self.max_detections,
-            self.nms_iou_threshold,
-            self.confidence_threshold,
-            clip_boxes=False,
-        )
+        return boxes, cls_predictions
+
+        # return tf.image.combined_non_max_suppression(
+        #     tf.expand_dims(boxes, axis=2),
+        #     cls_predictions,
+        #     self.max_detections_per_class,
+        #     self.max_detections,
+        #     self.nms_iou_threshold,
+        #     self.confidence_threshold,
+        #     clip_boxes=False,
+        # )
 
 class RetinaNetBoxLoss(tf.losses.Loss):
     """Implements Smooth L1 loss"""
@@ -261,16 +267,16 @@ class RetinaNetLoss(tf.losses.Loss):
 
     def call(self, y_true, y_pred):
         y_pred = tf.cast(y_pred, dtype=tf.float32)
-        box_labels = y_true[:, :, :4]
-        box_predictions = y_pred[:, :, :4]
+        box_labels = y_true[:, :, :12]
+        box_predictions = y_pred[:, :, :12]
         cls_labels = tf.one_hot(
-            tf.cast(y_true[:, :, 4], dtype=tf.int32),
+            tf.cast(y_true[:, :, 12], dtype=tf.int32),
             depth=self._num_classes,
             dtype=tf.float32,
         )
-        cls_predictions = y_pred[:, :, 4:]
-        positive_mask = tf.cast(tf.greater(y_true[:, :, 4], -1.0), dtype=tf.float32)
-        ignore_mask = tf.cast(tf.equal(y_true[:, :, 4], -2.0), dtype=tf.float32)
+        cls_predictions = y_pred[:, :, 12:]
+        positive_mask = tf.cast(tf.greater(y_true[:, :, 12], -1.0), dtype=tf.float32)
+        ignore_mask = tf.cast(tf.equal(y_true[:, :, 12], -2.0), dtype=tf.float32)
         clf_loss = self._clf_loss(cls_labels, cls_predictions)
         box_loss = self._box_loss(box_labels, box_predictions)
         clf_loss = tf.where(tf.equal(ignore_mask, 1.0), 0.0, clf_loss)
