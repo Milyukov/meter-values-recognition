@@ -1,5 +1,5 @@
 import tensorflow as tf
-from utils import *
+from utils_stage1 import *
 
 def random_flip_horizontal(image, boxes):
     """Flips image and boxes horizontally with 50% chance
@@ -196,7 +196,6 @@ class LabelEncoder:
         matched_gt_idx, positive_mask, ignore_mask = self._match_anchor_boxes(
             anchor_boxes, gt_boxes
         )
-        # here's the error (8 points instead of 12)
         matched_gt_boxes = tf.gather(gt_boxes, matched_gt_idx)
         box_target = self._compute_box_target(anchor_boxes, matched_gt_boxes)
         matched_gt_cls_ids = tf.gather(cls_ids, matched_gt_idx)

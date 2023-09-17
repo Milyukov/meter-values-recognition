@@ -3,9 +3,9 @@ import numpy as np
 import zipfile
 import tensorflow_datasets as tfds
 
-from data_processing import LabelEncoder, preprocess_data, resize_and_pad_image
-from model import *
-from utils import visualize_detections
+from data_processing_stage1 import LabelEncoder, preprocess_data, resize_and_pad_image
+from model_stage1 import *
+from utils_stage1 import visualize_detections
 from tensorflow import keras
 
 import gc
