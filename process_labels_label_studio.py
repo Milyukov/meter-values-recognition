@@ -13,7 +13,7 @@ def get_images_info(input_path):
         images_info = json.load(f)
     return images_info
 
-def generate_examples(images_info, images_path, width, height):
+def generate_examples_stage1(images_info, images_path, width, height):
     # for image
     for image_info in images_info:
         # read image
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     width, height = config['stage1']['width'], config['stage1']['height']
     # generate dataset stage 2
     images_info = get_images_info(input_path)
-    for im_resized, labels, bbox, keypoints in generate_examples(images_info, images_path, width, height):
+    for im_resized, labels, bbox, keypoints in generate_examples_stage1(images_info, images_path, width, height):
         # generate image for stage 2
         im_dst_eq = extract_rectangle_area(im_resized, bbox, keypoints)
         # save generated image
