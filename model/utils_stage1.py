@@ -96,15 +96,12 @@ def visualize_detections(
     for box, score in zip(boxes, scores):
         # text = "{}: {:.2f}".format(_cls, score)
         x1, y1, x2, y2, kpx1, kpy1, kpx2, kpy2, kpx3, kpy3, kpx4, kpy4 = box
-        # w, h = x2 - x1, y2 - y1
-        # patch = plt.Rectangle(
-        #     [x1, y1], w, h, fill=False, edgecolor=color, linewidth=linewidth
-        # )
-        image = cv2.rectangle(image, [np.int64(x1), np.int64(y1)], [np.int64(x2), np.int64(y2)], (0, 255, 0))
-        image = cv2.circle(image, [np.int64(kpx1), np.int64(kpy1)], 3, (0, 0, 255))
-        image = cv2.circle(image, [np.int64(kpx2), np.int64(kpy2)], 3, (0, 0, 255))
-        image = cv2.circle(image, [np.int64(kpx3), np.int64(kpy3)], 3, (0, 0, 255))
-        image = cv2.circle(image, [np.int64(kpx4), np.int64(kpy4)], 3, (0, 0, 255))
+        w, h = x2 - x1, y2 - y1
+        image = cv2.rectangle(image, [np.int32(x1), np.int32(y1)], [np.int32(x2), np.int32(y2)], (0, 255, 0))
+        image = cv2.circle(image, [np.int32(kpx1), np.int32(kpy1)], 3, (0, 0, 255))
+        image = cv2.circle(image, [np.int32(kpx2), np.int32(kpy2)], 3, (0, 0, 255))
+        image = cv2.circle(image, [np.int32(kpx3), np.int32(kpy3)], 3, (0, 0, 255))
+        image = cv2.circle(image, [np.int32(kpx4), np.int32(kpy4)], 3, (0, 0, 255))
         #ax.add_patch(patch)
         # ax.text(
         #     x1,

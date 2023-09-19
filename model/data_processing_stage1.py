@@ -175,14 +175,18 @@ class LabelEncoder:
 
     def _compute_box_target(self, anchor_boxes, matched_gt_boxes):
         """Transforms the ground truth boxes into targets for training"""
+        ul = anchor_boxes[:, :2] - anchor_boxes[:, 2:4] / 2
+        ur = anchor_boxes[:, :2] + np.array([1.0, -1.0]) * anchor_boxes[:, 2:4] / 2
+        br = anchor_boxes[:, :2] + anchor_boxes[:, 2:4] / 2
+        bl = anchor_boxes[:, :2] + np.array([-1.0, 1.0]) * anchor_boxes[:, 2:4] / 2
         box_target = tf.concat(
             [
                 (matched_gt_boxes[:, :2] - anchor_boxes[:, :2]) / anchor_boxes[:, 2:4],
                 tf.math.log(matched_gt_boxes[:, 2:4] / anchor_boxes[:, 2:4]),
-                (matched_gt_boxes[:, 4:6] - anchor_boxes[:, :2]) / anchor_boxes[:, 2:4],
-                (matched_gt_boxes[:, 6:8] - anchor_boxes[:, :2]) / anchor_boxes[:, 2:4],
-                (matched_gt_boxes[:, 8:10] - anchor_boxes[:, :2]) / anchor_boxes[:, 2:4],
-                (matched_gt_boxes[:, 10:] - anchor_boxes[:, :2]) / anchor_boxes[:, 2:4],
+                (matched_gt_boxes[:, 4:6] - ul) / anchor_boxes[:, 2:4],
+                (matched_gt_boxes[:, 6:8] - ur) / anchor_boxes[:, 2:4],
+                (matched_gt_boxes[:, 8:10] - br) / anchor_boxes[:, 2:4],
+                (matched_gt_boxes[:, 10:] - bl) / anchor_boxes[:, 2:4],
             ],
             axis=-1,
         )

@@ -46,8 +46,8 @@ if __name__ == '__main__':
     num_classes = 4
     batch_size = 1
 
-    learning_rates = [0.001, 0.0001]#[2.5e-06, 0.000625, 0.00125, 0.0025, 0.00025, 2.5e-05]
-    learning_rate_boundaries = [200]#[125, 250,500, 240000, 360000] 
+    learning_rates = [0.001, 0.0001, 0.00005]#[2.5e-06, 0.000625, 0.00125, 0.0025, 0.00025, 2.5e-05]
+    learning_rate_boundaries = [100, 200]#[125, 250,500, 240000, 360000] 
     learning_rate_fn = tf.optimizers.schedules.PiecewiseConstantDecay(
         boundaries=learning_rate_boundaries, values=learning_rates
     )
@@ -56,18 +56,19 @@ if __name__ == '__main__':
     loss_fn = RetinaNetLoss(num_classes)
     model = RetinaNet(num_classes, resnet50_backbone)
 
-    optimizer = tf.keras.optimizers.SGD(learning_rate=learning_rate_fn, momentum=0.9)
-    optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate_fn)
+    #optimizer = tf.keras.optimizers.SGD(learning_rate=learning_rate_fn, momentum=0.9)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=0.0000000005)#learning_rate_fn)
     model.compile(loss=loss_fn, optimizer=optimizer)#, run_eagerly=True)
 
+    checkpoint_path = "retinanet/stage1.keras"
     callbacks_list = [
         tf.keras.callbacks.ModelCheckpoint(
             #filepath=os.path.join(model_dir, "weights" + "_epoch_{epoch}"),
-            filepath=os.path.join(model_dir, "weights_best"),
+            filepath=checkpoint_path,
             monitor="loss",
-            save_best_only=True,
-            save_weights_only=True,
-            #save_freq=100,
+            save_best_only=False,
+            save_weights_only=False,
+            save_freq=1,
             verbose=1,
         ),
         MemoryUsageCallbackExtended()
@@ -83,6 +84,21 @@ if __name__ == '__main__':
 
     for example in train_dataset:
         image_loaded = example['image'].numpy()
+        h, w, d = image_loaded.shape
+        bbox = example['objects']['bbox'].numpy()[0]
+        print(bbox)
+        image_loaded = cv2.rectangle(
+           image_loaded, [int(bbox[1] * w), int(bbox[0] * h)], [int(bbox[3] * w), int(bbox[2] * h)], (255, 0, 0))
+        bb_w = int((bbox[3] - bbox[1]) * w)
+        bb_h = int((bbox[2] - bbox[0]) * w)
+        image_loaded = cv2.circle(
+           image_loaded, [int(bbox[5] * w), int(bbox[4] * h)], 3, (255, 0, 0))
+        image_loaded = cv2.circle(
+           image_loaded, [int(bbox[7] * w), int(bbox[6] * h)], 3, (255, 0, 0))
+        image_loaded = cv2.circle(
+           image_loaded, [int(bbox[9] * w), int(bbox[8] * h)], 3, (255, 0, 0))
+        image_loaded = cv2.circle(
+           image_loaded, [int(bbox[11] * w), int(bbox[10] * h)], 3, (255, 0, 0))
         break
 
     train_dataset = train_dataset.map(preprocess_data, num_parallel_calls=1)#autotune)
@@ -113,19 +129,22 @@ if __name__ == '__main__':
     # train_steps = 4 * 100000
     # epochs = train_steps // train_steps_per_epoch
 
-    epochs = 10
+    epochs = 50
 
     # Running 1 training step,
     # remove `.take` when training on the full dataset
+    import os
+    if os.path.exists(checkpoint_path):
+        model = tf.keras.saving.load_model(checkpoint_path)
 
     model.fit(
         train_dataset.take(1),
         epochs=epochs,
         callbacks=callbacks_list,
-        verbose=1,
+        verbose=1
     )
 
-    model.save('./data/model.keras')
+    # model.save('./data/model.keras')
 
     def prepare_image(image):
         image, _, ratio = resize_and_pad_image(image, jitter=None)
@@ -135,7 +154,6 @@ if __name__ == '__main__':
     # Change this to `model_dir` when not using the downloaded weights
     # weights_dir = "data"
     # latest_checkpoint = tf.train.latest_checkpoint(weights_dir)
-    # model.load_weights(latest_checkpoint)
     # model = keras.models.load_model('./data/model.keras')
 
     image = tf.keras.Input(shape=[None, None, 3], name="image")
@@ -173,7 +191,7 @@ if __name__ == '__main__':
         
         return iou
 
-    max_detections = 100
+    max_detections = 5
 
     for sample in [image_loaded]:#val_dataset.take(2):
         image = tf.cast(sample, dtype=tf.float32)
@@ -184,7 +202,7 @@ if __name__ == '__main__':
         for index, confidences in enumerate(detections[1]):
            bboxes = detections[0][index]
            # select only rectangles above a confidence threshold
-           valid_detections = np.max(confidences , axis=1) > 0.001
+           valid_detections = np.max(confidences , axis=1) >= 0.0
            confidences = confidences[valid_detections]
            bboxes = bboxes[valid_detections]
            # sort the thresholded rectangles in descending order

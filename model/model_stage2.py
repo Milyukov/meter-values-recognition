@@ -253,8 +253,8 @@ class RetinaNetClassificationLoss(tf.losses.Loss):
 class RetinaNetLoss(tf.losses.Loss):
     """Wrapper to combine both the losses"""
 
-    def __init__(self, num_classes=80, alpha=0.25, gamma=2.0, delta=1.0):
-        super().__init__(reduction="auto", name="RetinaNetLoss")
+    def __init__(self, num_classes=80, alpha=0.25, gamma=2.0, delta=1.0, reduction="auto", name="RetinaNetLoss"):
+        super().__init__(reduction=reduction, name=name)
         self._clf_loss = RetinaNetClassificationLoss(alpha, gamma)
         self._box_loss = RetinaNetBoxLoss(delta)
         self._num_classes = num_classes
@@ -284,15 +284,12 @@ class RetinaNetLoss(tf.losses.Loss):
     def get_config(self):
         base_config = super().get_config()
         config = {
-            "reduction": keras.saving.serialize_keras_object("auto"),
-            "name":  keras.saving.serialize_keras_object("RetinaNetLoss")
+            "num_classes": keras.saving.serialize_keras_object(self._num_classes)
         }
         return {**base_config, **config}
 
     @classmethod
     def from_config(cls, config):
-        reduction_config = config.pop("reduction")
-        reduction = keras.saving.deserialize_keras_object(reduction_config)
-        name_config = config.pop("name")
-        name = keras.saving.deserialize_keras_object(name_config)
-        return cls(reduction, name, **config)
+        num_classes_config = config.pop("num_classes")
+        num_classes = keras.saving.deserialize_keras_object(num_classes_config)
+        return cls(num_classes=num_classes, **config)

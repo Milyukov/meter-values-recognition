@@ -31,7 +31,7 @@ class MemoryUsageCallbackExtended(tf.keras.callbacks.Callback):
 model_dir = "retinanet/"
 label_encoder = LabelEncoder()
 
-num_classes = 4
+num_classes = 15
 batch_size = 1
 
 learning_rates = [0.001, 0.0001, 0.00001]#[2.5e-06, 0.000625, 0.00125, 0.0025, 0.00025, 2.5e-05]
@@ -44,16 +44,18 @@ resnet50_backbone = get_backbone()
 loss_fn = RetinaNetLoss(num_classes)
 model = RetinaNet(num_classes, resnet50_backbone)
 
-optimizer = tf.keras.optimizers.SGD(learning_rate=learning_rate_fn, momentum=0.9)
+optimizer = tf.keras.optimizers.SGD(learning_rate=0.001, momentum=0.9)
 model.compile(loss=loss_fn, optimizer=optimizer)#, run_eagerly=True)
 
+checkpoint_path = "retinanet/stage2.keras"
 callbacks_list = [
     tf.keras.callbacks.ModelCheckpoint(
-        filepath=os.path.join(model_dir, "weights" + "_epoch_{epoch}"),
+        #filepath=os.path.join(model_dir, "weights" + "_epoch_{epoch}"),
+        filepath=checkpoint_path,
         monitor="loss",
         save_best_only=False,
-        save_weights_only=True,
-        save_freq=1010,
+        save_weights_only=False,
+        save_freq=1,
         verbose=1,
     ),
     MemoryUsageCallbackExtended()
@@ -98,10 +100,13 @@ print(f'Train steps per epoch = {train_steps_per_epoch}')
 # train_steps = 4 * 100000
 # epochs = train_steps // train_steps_per_epoch
 
-epochs = 100
+epochs = 50
 
 # Running 100 training and 50 validation steps,
 # remove `.take` when training on the full dataset
+import os
+if os.path.exists(checkpoint_path):
+    model = tf.keras.saving.load_model(checkpoint_path)
 
 model.fit(
     train_dataset.take(1),

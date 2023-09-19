@@ -109,6 +109,7 @@ class RetinaNet(keras.Model):
         super().__init__(name="RetinaNet", **kwargs)
         self.fpn = FeaturePyramid(backbone)
         self.num_classes = num_classes
+        self.backbone = backbone
 
         prior_probability = tf.constant_initializer(-np.log((1 - 0.01) / 0.01))
         self.cls_head = build_head(9 * num_classes, prior_probability)
@@ -132,6 +133,10 @@ class RetinaNet(keras.Model):
         base_config = super().get_config()
         config = {
             "num_classes": keras.saving.serialize_keras_object(self.num_classes),
+            #"fpn": keras.saving.serialize_keras_object(self.fpn),
+            #"cls_head": keras.saving.serialize_keras_object(self.cls_head),
+            #"box_head": keras.saving.serialize_keras_object(self.box_head),
+            "backbone": keras.saving.serialize_keras_object(self.backbone)
         }
         return {**base_config, **config}
 
@@ -139,7 +144,9 @@ class RetinaNet(keras.Model):
     def from_config(cls, config):
         num_classes_config = config.pop("num_classes")
         num_classes = keras.saving.deserialize_keras_object(num_classes_config)
-        return cls(num_classes, **config)
+        backbone_config = config.pop("backbone")
+        backbone = keras.saving.deserialize_keras_object(backbone_config)
+        return cls(num_classes, backbone, **config)
     
 class DecodePredictions(tf.keras.layers.Layer):
     """A Keras layer that decodes predictions of the RetinaNet model.
@@ -180,15 +187,20 @@ class DecodePredictions(tf.keras.layers.Layer):
         )
 
     def _decode_box_predictions(self, anchor_boxes, box_predictions):
+        anchor_sizes = anchor_boxes[:, :, 2:4]
         boxes = box_predictions * self._box_variance
+        ul = anchor_boxes[:, :, :2] - anchor_sizes / 2
+        ur = anchor_boxes[:, :, :2] + np.array([1.0, -1.0]) * anchor_sizes / 2 # tf.constant([1.0, -1.0])
+        br = anchor_boxes[:, :, :2] + anchor_sizes / 2
+        bl = anchor_boxes[:, :, :2] + np.array([-1.0, 1.0]) * anchor_sizes / 2
         boxes = tf.concat(
             [
                 boxes[:, :, :2] * anchor_boxes[:, :, 2:] + anchor_boxes[:, :, :2],
-                tf.math.exp(boxes[:, :, 2:4]) * anchor_boxes[:, :, 2:4],
-                boxes[:, :, 4:6] * anchor_boxes[:, :, 2:] + anchor_boxes[:, :, :2],
-                boxes[:, :, 6:8] * anchor_boxes[:, :, 2:] + anchor_boxes[:, :, :2],
-                boxes[:, :, 8:10] * anchor_boxes[:, :, 2:] + anchor_boxes[:, :, :2],
-                boxes[:, :, 10:] * anchor_boxes[:, :, 2:] + anchor_boxes[:, :, :2]
+                tf.math.exp(boxes[:, :, 2:4]) * anchor_sizes,
+                boxes[:, :, 4:6] * anchor_boxes[:, :, 2:] + ul,
+                boxes[:, :, 6:8] * anchor_boxes[:, :, 2:] + ur,
+                boxes[:, :, 8:10] * anchor_boxes[:, :, 2:] + br,
+                boxes[:, :, 10:] * anchor_boxes[:, :, 2:] + bl
             ],
             axis=-1,
         )
@@ -259,8 +271,8 @@ class RetinaNetClassificationLoss(tf.losses.Loss):
 class RetinaNetLoss(tf.losses.Loss):
     """Wrapper to combine both the losses"""
 
-    def __init__(self, num_classes=80, alpha=0.25, gamma=2.0, delta=1.0):
-        super().__init__(reduction="auto", name="RetinaNetLoss")
+    def __init__(self, num_classes=80, alpha=0.25, gamma=2.0, delta=1.0, reduction="auto", name="RetinaNetLoss"):
+        super().__init__(reduction=reduction, name=name)
         self._clf_loss = RetinaNetClassificationLoss(alpha, gamma)
         self._box_loss = RetinaNetBoxLoss(delta)
         self._num_classes = num_classes
@@ -290,15 +302,12 @@ class RetinaNetLoss(tf.losses.Loss):
     def get_config(self):
         base_config = super().get_config()
         config = {
-            "reduction": keras.saving.serialize_keras_object("auto"),
-            "name":  keras.saving.serialize_keras_object("RetinaNetLoss")
+            "num_classes": keras.saving.serialize_keras_object(self._num_classes)
         }
         return {**base_config, **config}
 
     @classmethod
     def from_config(cls, config):
-        reduction_config = config.pop("reduction")
-        reduction = keras.saving.deserialize_keras_object(reduction_config)
-        name_config = config.pop("name")
-        name = keras.saving.deserialize_keras_object(name_config)
-        return cls(reduction, name, **config)
+        num_classes_config = config.pop("num_classes")
+        num_classes = keras.saving.deserialize_keras_object(num_classes_config)
+        return cls(num_classes=num_classes, **config)

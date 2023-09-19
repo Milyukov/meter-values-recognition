@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-def resize_image(im, keypoints, width, height):
+def resize_image_keypoints(im, keypoints, width, height):
     h, w, c = im.shape
     delta_top = 0
     delta_bottom = 0
@@ -35,6 +35,41 @@ def resize_image(im, keypoints, width, height):
     keypoints_resized = np.array(keypoints_resized)
     return im_resized, keypoints_resized
 
+def resize_image_bboxes(im, bboxes, width, height):
+    h, w, c = im.shape
+    delta_top = 0
+    delta_bottom = 0
+    delta_left = 0
+    delta_right = 0
+    # make image rectangular
+    if h > w:
+        delta = h - w
+        delta_left = delta // 2
+        delta_right = delta // 2
+        if delta % 2 != 0:
+            delta_right += 1
+    else:
+        delta = w - h
+        delta_top = delta // 2
+        delta_bottom = delta // 2
+        if delta % 2 != 0:
+            delta_top += 1
+    bboxes_resized = []
+    for box in bboxes:
+        bboxes_resized.append(box[:])
+    for box in bboxes_resized:
+        box[0] += delta_left
+        box[1] += delta_top
+    im_resized = cv2.copyMakeBorder(
+        im, delta_top, delta_bottom, delta_left, delta_right, cv2.BORDER_CONSTANT, value=0)
+    side = im_resized.shape[0]
+    scale = height / side
+    for box_idx, box in enumerate(bboxes_resized):
+        bboxes_resized[box_idx] = [box[0] * scale, box[1] * scale, box[2] * scale, box[3] * scale]
+    im_resized = cv2.resize(im_resized, (width, height))
+    bboxes_resized = np.array(bboxes_resized)
+    return im_resized, bboxes_resized
+
 def sort_keypoints(keypoints):
     # assumption: left points are on the left
     keypoints_sorted = sorted(keypoints, key=lambda x: x[0])
@@ -54,13 +89,18 @@ def sort_keypoints(keypoints):
 
 def process_keypoints(im, keypoints, width, height):
     # sort keypoints: top-left, top-right, bottom-rightm bottom-left
-    keypoints = sort_keypoints(keypoints)
+    #keypoints = sort_keypoints(keypoints) # they are sorted by design
     # resize image and keypoints
-    im_resized, keypoints_resized = resize_image(im, keypoints, width, height)
+    im_resized, keypoints_resized = resize_image_keypoints(im, keypoints, width, height)
     # create bounding box
     bbox = cv2.boundingRect(keypoints_resized.astype(np.int32))
     bbox = np.array(bbox)
     return im_resized, bbox, keypoints_resized 
+
+def process_bboxes(im, bboxes, width, height):
+    # resize image and bboxes
+    im_resized, bboxes_resized = resize_image_bboxes(im, bboxes, width, height)
+    return im_resized, bboxes_resized 
     
 
 def extract_rectangle_area(im_resized, bbox, keypoints):
