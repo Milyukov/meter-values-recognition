@@ -94,7 +94,7 @@ def visualize_detections(
     ax = plt.gca()
     #for box, _cls, score in zip(boxes, classes, scores):
     for box, score in zip(boxes, scores):
-        # text = "{}: {:.2f}".format(_cls, score)
+        text = "{:.2f}".format(score[0])
         x1, y1, x2, y2, kpx1, kpy1, kpx2, kpy2, kpx3, kpy3, kpx4, kpy4 = box
         w, h = x2 - x1, y2 - y1
         image = cv2.rectangle(image, [np.int32(x1), np.int32(y1)], [np.int32(x2), np.int32(y2)], (0, 255, 0))
@@ -103,14 +103,14 @@ def visualize_detections(
         image = cv2.circle(image, [np.int32(kpx3), np.int32(kpy3)], 3, (0, 0, 255))
         image = cv2.circle(image, [np.int32(kpx4), np.int32(kpy4)], 3, (0, 0, 255))
         #ax.add_patch(patch)
-        # ax.text(
-        #     x1,
-        #     y1,
-        #     text,
-        #     bbox={"facecolor": color, "alpha": 0.4},
-        #     clip_box=ax.clipbox,
-        #     clip_on=True,
-        # )
+        ax.text(
+            x1,
+            y1,
+            text,
+            bbox={"facecolor": color, "alpha": 0.4},
+            clip_box=ax.clipbox,
+            clip_on=True,
+        )
     plt.imshow(image)
     plt.show()
     return ax

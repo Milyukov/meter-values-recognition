@@ -1,6 +1,4 @@
 import os
-import numpy as np
-import zipfile
 import tensorflow_datasets as tfds
 
 from data_processing_stage2 import LabelEncoder, preprocess_data, resize_and_pad_image
@@ -34,8 +32,8 @@ label_encoder = LabelEncoder()
 num_classes = 15
 batch_size = 1
 
-learning_rates = [0.001, 0.0001, 0.00001]#[2.5e-06, 0.000625, 0.00125, 0.0025, 0.00025, 2.5e-05]
-learning_rate_boundaries = [125, 250]#[125, 250,500, 240000, 360000] 
+learning_rates = [0.00005, 0.000005]#[2.5e-06, 0.000625, 0.00125, 0.0025, 0.00025, 2.5e-05]
+learning_rate_boundaries = [25]#[125, 250,500, 240000, 360000] 
 learning_rate_fn = tf.optimizers.schedules.PiecewiseConstantDecay(
     boundaries=learning_rate_boundaries, values=learning_rates
 )
@@ -44,13 +42,12 @@ resnet50_backbone = get_backbone()
 loss_fn = RetinaNetLoss(num_classes)
 model = RetinaNet(num_classes, resnet50_backbone)
 
-optimizer = tf.keras.optimizers.SGD(learning_rate=0.001, momentum=0.9)
+optimizer = tf.keras.optimizers.Adam(learning_rate=0.000005)
 model.compile(loss=loss_fn, optimizer=optimizer)#, run_eagerly=True)
 
 checkpoint_path = "retinanet/stage2.keras"
 callbacks_list = [
     tf.keras.callbacks.ModelCheckpoint(
-        #filepath=os.path.join(model_dir, "weights" + "_epoch_{epoch}"),
         filepath=checkpoint_path,
         monitor="loss",
         save_best_only=False,
@@ -68,8 +65,21 @@ callbacks_list = [
 
 # autotune = tf.data.AUTOTUNE
 
+import cv2
 for example in train_dataset:
     image_loaded = example['image'].numpy()
+    # h, w, c = image_loaded.shape
+    # bboxes = example['objects']['bbox']
+    # labels = example['objects']['label']
+    # for bbox, label in zip(bboxes, labels):
+    #    xmin = int(bbox[1] * w)
+    #    ymin = int(bbox[0] * h)
+    #    xmax = int(bbox[3] * w)
+    #    ymax = int(bbox[2] * h)
+    #    cv2.putText(image_loaded, f'{label}', (xmin, ymin - 20) if label < 10 else (xmin, ymax + 20), 0, 0.7, (0, 255, 0))
+    #    image_loaded = cv2.rectangle(image_loaded, (xmin, ymin), (xmax, ymax), (0, 255, 0))
+    # plt.imshow(image_loaded)
+    # plt.show()
     break
 
 train_dataset = train_dataset.map(preprocess_data, num_parallel_calls=1)#autotune)
@@ -100,7 +110,7 @@ print(f'Train steps per epoch = {train_steps_per_epoch}')
 # train_steps = 4 * 100000
 # epochs = train_steps // train_steps_per_epoch
 
-epochs = 50
+epochs = 60
 
 # Running 100 training and 50 validation steps,
 # remove `.take` when training on the full dataset
@@ -121,78 +131,23 @@ def prepare_image(image):
     image = tf.keras.applications.resnet.preprocess_input(image)
     return tf.expand_dims(image, axis=0), ratio
 
-# for epoch in range(epochs):
-#     print('Memory usage on epoch begin: {}'.format(psutil.Process(os.getpid()).memory_info().rss))
-
-#     # Iterate over the batches of the dataset.
-#     for step, example in enumerate(train_dataset):
-#         images, bboxes, cls = preprocess_data(example)
-#         images = tf.expand_dims(images, 0)
-#         bboxes = tf.expand_dims(bboxes, 0)
-#         cls = tf.expand_dims(cls, 0)
-#         x_batch_train, y_batch_train = label_encoder.encode_batch(images, bboxes, cls)
-#         # Open a GradientTape to record the operations run
-#         # during the forward pass, which enables auto-differentiation.
-#         with tf.GradientTape() as tape:
-#             # Run the forward pass of the layer.
-#             # The operations that the layer applies
-#             # to its inputs are going to be recorded
-#             # on the GradientTape.
-#             predictions = model(x_batch_train, training=True)  # Logits for this minibatch
-
-#             # Compute the loss value for this minibatch.
-#             loss_value = loss_fn(y_batch_train, predictions)
-
-#         # Use the gradient tape to automatically retrieve
-#         # the gradients of the trainable variables with respect to the loss.
-#         grads = tape.gradient(loss_value, model.trainable_weights)
-
-#         # Run one step of gradient descent by updating
-#         # the value of the variables to minimize the loss.
-#         optimizer.apply_gradients(zip(grads, model.trainable_weights))
-
-#         print('Memory usage on epoch end:   {}'.format(psutil.Process(os.getpid()).memory_info().rss))
-
-#         # Log every 200 batches.
-#         if step % 200 == 0:
-#             print(
-#                 "Training loss (for one batch) at step %d: %.4f"
-#                 % (step, float(loss_value))
-#             )
-#             print("Seen so far: %s samples" % ((step + 1) * batch_size))
-
-# model.save('./data/model.keras')
-
-# Change this to `model_dir` when not using the downloaded weights
-#weights_dir = "data"
-weights_dir = "./data/"
-
-#latest_checkpoint = tf.train.latest_checkpoint(weights_dir)
-#model.load_weights(latest_checkpoint)
-# model = keras.models.load_model('./data/model.keras')
-
 image = tf.keras.Input(shape=[None, None, 3], name="image")
 predictions = model(image, training=False)
 detections = DecodePredictions(confidence_threshold=0.5)(image, predictions)
 inference_model = tf.keras.Model(inputs=image, outputs=detections)
 
-
-
-
 # val_dataset = tfds.load("coco/2017", split="validation", data_dir="data")
-# int2str = dataset_info.features["objects"]["label"].int2str
+int2str = dataset_info.features["objects"]["label"].int2str
 
 for sample in [image_loaded]:#val_dataset.take(2):
     image = tf.cast(sample, dtype=tf.float32)
     input_image, ratio = prepare_image(image)
-    #assert input_image - x
     print(input_image.shape)
     detections = inference_model.predict(input_image)
     num_detections = detections.valid_detections[0]
-    # class_names = [
-    #     int2str(int(x)) for x in detections.nmsed_classes[0][:num_detections]
-    # ]
-    class_names= []
+    class_names = [
+        int2str(int(x)) for x in detections.nmsed_classes[0][:num_detections]
+    ]
     visualize_detections(
         image,
         detections.nmsed_boxes[0][:num_detections] / ratio,

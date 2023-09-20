@@ -85,23 +85,22 @@ def visualize_detections(
     plt.axis("off")
     plt.imshow(image)
     ax = plt.gca()
-    #for box, _cls, score in zip(boxes, classes, scores):
-    for box, score in zip(boxes, scores):
-        # text = "{}: {:.2f}".format(_cls, score)
+    for box, _cls, score in zip(boxes, classes, scores):
+        text = "{}: {:.2f}".format(_cls, score)
         x1, y1, x2, y2 = box
         w, h = x2 - x1, y2 - y1
         patch = plt.Rectangle(
             [x1, y1], w, h, fill=False, edgecolor=color, linewidth=linewidth
         )
         ax.add_patch(patch)
-        # ax.text(
-        #     x1,
-        #     y1,
-        #     text,
-        #     bbox={"facecolor": color, "alpha": 0.4},
-        #     clip_box=ax.clipbox,
-        #     clip_on=True,
-        # )
+        ax.text(
+            x1,
+            y1,
+            text,
+            bbox={"facecolor": color, "alpha": 0.4},
+            clip_box=ax.clipbox,
+            clip_on=True,
+        )
     plt.show()
     return ax
 

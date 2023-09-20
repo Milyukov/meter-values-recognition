@@ -88,7 +88,7 @@ def preprocess_data(sample):
     class_id = tf.cast(sample["objects"]["label"], dtype=tf.int32)
 
     #image, bbox = random_flip_horizontal(image, bbox)
-    image, image_shape, _ = resize_and_pad_image(image)
+    image, image_shape, _ = resize_and_pad_image(image, jitter=None)
 
     bbox = tf.stack(
         [

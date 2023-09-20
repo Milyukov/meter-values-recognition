@@ -11,6 +11,8 @@ from tensorflow import keras
 import gc
 import psutil
 
+import matplotlib.pyplot as plt
+
 class MemoryUsageCallbackExtended(tf.keras.callbacks.Callback):
   '''Monitor memory usage on epoch begin and end, collect garbage'''
 
@@ -57,7 +59,7 @@ if __name__ == '__main__':
     model = RetinaNet(num_classes, resnet50_backbone)
 
     #optimizer = tf.keras.optimizers.SGD(learning_rate=learning_rate_fn, momentum=0.9)
-    optimizer = tf.keras.optimizers.Adam(learning_rate=0.0000000005)#learning_rate_fn)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=0.000005)#learning_rate_fn)
     model.compile(loss=loss_fn, optimizer=optimizer)#, run_eagerly=True)
 
     checkpoint_path = "retinanet/stage1.keras"
@@ -84,21 +86,21 @@ if __name__ == '__main__':
 
     for example in train_dataset:
         image_loaded = example['image'].numpy()
-        h, w, d = image_loaded.shape
-        bbox = example['objects']['bbox'].numpy()[0]
-        print(bbox)
-        image_loaded = cv2.rectangle(
-           image_loaded, [int(bbox[1] * w), int(bbox[0] * h)], [int(bbox[3] * w), int(bbox[2] * h)], (255, 0, 0))
-        bb_w = int((bbox[3] - bbox[1]) * w)
-        bb_h = int((bbox[2] - bbox[0]) * w)
-        image_loaded = cv2.circle(
-           image_loaded, [int(bbox[5] * w), int(bbox[4] * h)], 3, (255, 0, 0))
-        image_loaded = cv2.circle(
-           image_loaded, [int(bbox[7] * w), int(bbox[6] * h)], 3, (255, 0, 0))
-        image_loaded = cv2.circle(
-           image_loaded, [int(bbox[9] * w), int(bbox[8] * h)], 3, (255, 0, 0))
-        image_loaded = cv2.circle(
-           image_loaded, [int(bbox[11] * w), int(bbox[10] * h)], 3, (255, 0, 0))
+        # h, w, d = image_loaded.shape
+        # bbox = example['objects']['bbox'].numpy()[0]
+        # print(bbox)
+        # image_loaded = cv2.rectangle(
+        #    image_loaded, [int(bbox[1] * w), int(bbox[0] * h)], [int(bbox[3] * w), int(bbox[2] * h)], (255, 0, 0))
+        # bb_w = int((bbox[3] - bbox[1]) * w)
+        # bb_h = int((bbox[2] - bbox[0]) * w)
+        # image_loaded = cv2.circle(
+        #    image_loaded, [int(bbox[5] * w), int(bbox[4] * h)], 3, (255, 0, 0))
+        # image_loaded = cv2.circle(
+        #    image_loaded, [int(bbox[7] * w), int(bbox[6] * h)], 3, (255, 0, 0))
+        # image_loaded = cv2.circle(
+        #    image_loaded, [int(bbox[9] * w), int(bbox[8] * h)], 3, (255, 0, 0))
+        # image_loaded = cv2.circle(
+        #    image_loaded, [int(bbox[11] * w), int(bbox[10] * h)], 3, (255, 0, 0))
         break
 
     train_dataset = train_dataset.map(preprocess_data, num_parallel_calls=1)#autotune)
@@ -112,13 +114,13 @@ if __name__ == '__main__':
     train_dataset = train_dataset.apply(tf.data.experimental.ignore_errors())
     train_dataset = train_dataset.prefetch(0)
 
-    val_dataset = val_dataset.map(preprocess_data, num_parallel_calls=autotune)
-    val_dataset = val_dataset.padded_batch(
-        batch_size=1, padding_values=(0.0, 1e-8, -1), drop_remainder=True
-    )
-    val_dataset = val_dataset.map(label_encoder.encode_batch, num_parallel_calls=1)#autotune)
-    val_dataset = val_dataset.apply(tf.data.experimental.ignore_errors())
-    val_dataset = val_dataset.prefetch(0)
+    # val_dataset = val_dataset.map(preprocess_data, num_parallel_calls=autotune)
+    # val_dataset = val_dataset.padded_batch(
+    #     batch_size=1, padding_values=(0.0, 1e-8, -1), drop_remainder=True
+    # )
+    # val_dataset = val_dataset.map(label_encoder.encode_batch, num_parallel_calls=1)#autotune)
+    # val_dataset = val_dataset.apply(tf.data.experimental.ignore_errors())
+    # val_dataset = val_dataset.prefetch(0)
 
     # Uncomment the following lines, when training on full dataset
     # train_steps_per_epoch = dataset_info.splits["train"].num_examples // batch_size
