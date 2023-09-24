@@ -52,15 +52,26 @@ class Builder(tfds.core.GeneratorBasedBuilder):
     #path = dl_manager.extract(archive_path)
 
     # TODO(MeterValuesDataset): Returns the Dict[split names, Iterator[Key, Example]]
+    self.width = 1024
+    self.height = 1024
+    partition_train = 0.8
+    partition_val = 0.1
+    partition_test = 0.1
+    images_info = process_labels_label_studio.get_images_info(path / 'labels.json')
+    max_samples_train = np.floor(len(images_info) * partition_train)
+    max_samples_val = np.floor(len(images_info) * partition_val)
+    max_samples_test = np.floor(len(images_info) * partition_test)
+    self.iter = process_labels_label_studio.generate_examples_stage1(
+      images_info, path, self.width, self.height)
     return {
-        'train': self._generate_examples(path, 'train'),
-        'test': self._generate_examples(path, 'test'),
+        'train': self._generate_examples(max_samples_train),
+        'validation': self._generate_examples(max_samples_val),
+        'test': self._generate_examples(max_samples_test),
     }
 
-  def _generate_examples(self, path, dataset_name):
+  def _generate_examples(self, max_samples):
     """Yields examples."""
     # TODO(meter_values_dataset_stage1): Yields (key, example) tuples from the dataset
-    partition = 0.9
     str2int = {
       'analog': 0,
       'digital': 1,
@@ -69,39 +80,25 @@ class Builder(tfds.core.GeneratorBasedBuilder):
     }
 
     index = 0
-    width = 1024
-    height = 1024
-    images_info = process_labels_label_studio.get_images_info(path / 'labels.json')
-    max_samples = np.floor(len(images_info) * partition)
-    for im_resized, label, bbox, keypoints, image_filename in process_labels_label_studio.generate_examples_stage1(
-      images_info, path, width, height):
-
+    while index < max_samples:
+      
       index += 1
 
-      if dataset_name == 'train' and index > max_samples:
-        break
-      elif dataset_name == 'test' and index <= max_samples:
-        continue
-      
-      # bbox_feature = tfds.features.BBox(
-      #   ymin=bbox[1] / height,
-      #   xmin=bbox[0] / width,
-      #   ymax=(bbox[1] + bbox[3]) / height,
-      #   xmax=(bbox[0] + bbox[2]) / width)
+      im_resized, label, bbox, keypoints, image_filename = next(self.iter)
       
       final_bbox = np.array([
-        bbox[1] / height,
-        bbox[0] / width,
-        (bbox[1] + bbox[3]) / height,
-        (bbox[0] + bbox[2]) / width,
-        keypoints[0][1] / height,
-        keypoints[0][0] / width,
-        keypoints[1][1] / height,
-        keypoints[1][0] / width,
-        keypoints[2][1] / height,
-        keypoints[2][0] / width,
-        keypoints[3][1] / height,
-        keypoints[3][0] / width,
+        bbox[1] / self.height,
+        bbox[0] / self.width,
+        (bbox[1] + bbox[3]) / self.height,
+        (bbox[0] + bbox[2]) / self.width,
+        keypoints[0][1] / self.height,
+        keypoints[0][0] / self.width,
+        keypoints[1][1] / self.height,
+        keypoints[1][0] / self.width,
+        keypoints[2][1] / self.height,
+        keypoints[2][0] / self.width,
+        keypoints[3][1] / self.height,
+        keypoints[3][0] / self.width,
       ], dtype=np.float32)
 
       yield index, {
