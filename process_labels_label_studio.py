@@ -17,9 +17,17 @@ def generate_examples_stage1(images_info, images_path, width, height):
     # for image
     for image_info in images_info:
         # read image
-        image_filename = image_info['file_upload'].split('-')[-1]
+        if 'file_upload' in image_info:
+            image_filename = image_info['file_upload'].split('-')[-1]
+        else:
+            prefix = 's3://datasets-counters/'
+            image_filename = image_info['data']['image'][len(prefix):]
         image_path = os.path.join(images_path, image_filename)
-        im = cv2.imread(image_path)
+        # to deal with Unicode:
+        if not os.path.exists(image_path):
+            continue
+        im = cv2.imdecode(np.fromfile(image_path, np.uint8), cv2.IMREAD_UNCHANGED)
+        #im = cv2.imread(image_path)
         if im is None:
             continue
         # read keypoints

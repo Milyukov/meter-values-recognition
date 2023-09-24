@@ -4,6 +4,9 @@ import tensorflow_datasets as tfds
 import tensorflow as tf
 import numpy as np
 
+import sys
+sys.path.append('..')
+
 import process_labels_label_studio
 
 
@@ -44,9 +47,9 @@ class Builder(tfds.core.GeneratorBasedBuilder):
   def _split_generators(self, dl_manager: tfds.download.DownloadManager):
     # TODO(meter_values_dataset): Downloads the data and defines the splits
     # data_path is a pathlib-like `Path('<manual_dir>/data.zip')`
-    archive_path = dl_manager.manual_dir / 'data.zip'
+    path = dl_manager.manual_dir #/ 'data.zip'
     # Extract the manually downloaded `data.zip`
-    path = dl_manager.extract(archive_path)
+    #path = dl_manager.extract(archive_path)
 
     # TODO(MeterValuesDataset): Returns the Dict[split names, Iterator[Key, Example]]
     return {
@@ -70,7 +73,7 @@ class Builder(tfds.core.GeneratorBasedBuilder):
     height = 1024
     images_info = process_labels_label_studio.get_images_info(path / 'labels.json')
     max_samples = np.floor(len(images_info) * partition)
-    for im_resized, label, bbox, keypoints in process_labels_label_studio.generate_examples_stage1(
+    for im_resized, label, bbox, keypoints, image_filename in process_labels_label_studio.generate_examples_stage1(
       images_info, path, width, height):
 
       index += 1
@@ -103,7 +106,7 @@ class Builder(tfds.core.GeneratorBasedBuilder):
 
       yield index, {
           'image': im_resized.astype(np.uint8),
-          'image/filename': '',
+          'image/filename': image_filename,
           'image/id': index,
           'objects': {
             'area': [bbox[2] * bbox[3]],
