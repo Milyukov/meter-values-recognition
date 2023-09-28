@@ -23,10 +23,10 @@ def run(queue, run_dir, hparams):
     batch_size = 8
     autotune = tf.data.AUTOTUNE
     (train_dataset, val_dataset, test_dataset), dataset_info = tfds.load(
-        "meter_values_dataset_stage1", split=["train", "val", "test"], with_info=True,
+        "meter_values_dataset_stage1", split=["train", "validation", "test"], with_info=True,
         read_config=tfds.ReadConfig(try_autocache=False)
     )
-    train_dataset = train_dataset[0]
+    #train_dataset = train_dataset[0]
     train_dataset = train_dataset.map(preprocess_data, num_parallel_calls=autotune)
     train_dataset = train_dataset.shuffle(batch_size)
     train_dataset = train_dataset.padded_batch(
@@ -97,7 +97,7 @@ if __name__ == '__main__':
         hp.hparams_config(
             hparams=[HP_LR],
             metrics=[hp.Metric(METRIC_LOSS, display_name='Loss'),
-                     hp.Metric(METRIC_EPOCH_LOSS, display_name='Batch loss')],
+                     hp.Metric(METRIC_EPOCH_LOSS, display_name='Epoch loss')],
         )
 
     session_num = 0

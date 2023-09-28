@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import numpy as np
 import zipfile
@@ -46,10 +47,10 @@ if __name__ == '__main__':
     label_encoder = LabelEncoder()
 
     num_classes = 4
-    batch_size = 1
+    batch_size = 8
 
-    learning_rates = [0.001, 0.0001, 0.00005]#[2.5e-06, 0.000625, 0.00125, 0.0025, 0.00025, 2.5e-05]
-    learning_rate_boundaries = [100, 200]#[125, 250,500, 240000, 360000] 
+    learning_rates = [0.01, 0.001, 0.0005]#[2.5e-06, 0.000625, 0.00125, 0.0025, 0.00025, 2.5e-05]
+    learning_rate_boundaries = [1, 10]#[125, 250,500, 240000, 360000] 
     learning_rate_fn = tf.optimizers.schedules.PiecewiseConstantDecay(
         boundaries=learning_rate_boundaries, values=learning_rates
     )
@@ -58,22 +59,23 @@ if __name__ == '__main__':
     loss_fn = RetinaNetLoss(num_classes)
     model = RetinaNet(num_classes, resnet50_backbone)
 
-    #optimizer = tf.keras.optimizers.SGD(learning_rate=learning_rate_fn, momentum=0.9)
-    optimizer = tf.keras.optimizers.Adam(learning_rate=0.000005)#learning_rate_fn)
-    model.compile(loss=loss_fn, optimizer=optimizer)#, run_eagerly=True)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
+    model.compile(loss=loss_fn, optimizer=optimizer, run_eagerly=True)
 
+    logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
+    tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
     checkpoint_path = "retinanet/stage1.keras"
     callbacks_list = [
         tf.keras.callbacks.ModelCheckpoint(
-            #filepath=os.path.join(model_dir, "weights" + "_epoch_{epoch}"),
             filepath=checkpoint_path,
             monitor="loss",
             save_best_only=False,
             save_weights_only=False,
-            save_freq=1,
+            save_freq=10,
             verbose=1,
         ),
-        MemoryUsageCallbackExtended()
+        MemoryUsageCallbackExtended(), 
+        tensorboard_callback
     ]
 
     (train_dataset, val_dataset), dataset_info = tfds.load(
@@ -82,88 +84,59 @@ if __name__ == '__main__':
     )
 
     autotune = tf.data.AUTOTUNE
-    #train_dataset = train_dataset[0]
 
-    for example in train_dataset:
-        image_loaded = example['image'].numpy()
-        # h, w, d = image_loaded.shape
-        # bbox = example['objects']['bbox'].numpy()[0]
-        # print(bbox)
-        # image_loaded = cv2.rectangle(
-        #    image_loaded, [int(bbox[1] * w), int(bbox[0] * h)], [int(bbox[3] * w), int(bbox[2] * h)], (255, 0, 0))
-        # bb_w = int((bbox[3] - bbox[1]) * w)
-        # bb_h = int((bbox[2] - bbox[0]) * w)
-        # image_loaded = cv2.circle(
-        #    image_loaded, [int(bbox[5] * w), int(bbox[4] * h)], 3, (255, 0, 0))
-        # image_loaded = cv2.circle(
-        #    image_loaded, [int(bbox[7] * w), int(bbox[6] * h)], 3, (255, 0, 0))
-        # image_loaded = cv2.circle(
-        #    image_loaded, [int(bbox[9] * w), int(bbox[8] * h)], 3, (255, 0, 0))
-        # image_loaded = cv2.circle(
-        #    image_loaded, [int(bbox[11] * w), int(bbox[10] * h)], 3, (255, 0, 0))
-        break
-
-    train_dataset = train_dataset.map(preprocess_data, num_parallel_calls=1)#autotune)
-    # train_dataset = train_dataset.shuffle(batch_size)
+    train_dataset = train_dataset.map(preprocess_data, num_parallel_calls=autotune)
+    train_dataset = train_dataset.shuffle(batch_size)
     train_dataset = train_dataset.padded_batch(
         batch_size=batch_size, padding_values=(0.0, 1e-8, -1), drop_remainder=True
     )
     train_dataset = train_dataset.map(
-        label_encoder.encode_batch, num_parallel_calls=1#autotune
+        label_encoder.encode_batch, num_parallel_calls=autotune
     )
     train_dataset = train_dataset.apply(tf.data.experimental.ignore_errors())
-    train_dataset = train_dataset.prefetch(0)
+    train_dataset = train_dataset.prefetch(autotune)
 
-    # val_dataset = val_dataset.map(preprocess_data, num_parallel_calls=autotune)
-    # val_dataset = val_dataset.padded_batch(
-    #     batch_size=1, padding_values=(0.0, 1e-8, -1), drop_remainder=True
-    # )
-    # val_dataset = val_dataset.map(label_encoder.encode_batch, num_parallel_calls=1)#autotune)
-    # val_dataset = val_dataset.apply(tf.data.experimental.ignore_errors())
-    # val_dataset = val_dataset.prefetch(0)
+    val_dataset = val_dataset.map(preprocess_data, num_parallel_calls=autotune)
+    val_dataset = val_dataset.padded_batch(
+        batch_size=1, padding_values=(0.0, 1e-8, -1), drop_remainder=True
+    )
+    val_dataset = val_dataset.map(label_encoder.encode_batch, num_parallel_calls=autotune)
+    val_dataset = val_dataset.apply(tf.data.experimental.ignore_errors())
+    val_dataset = val_dataset.prefetch(autotune)
 
     # Uncomment the following lines, when training on full dataset
-    # train_steps_per_epoch = dataset_info.splits["train"].num_examples // batch_size
-    # print(f'Train steps per epoch = {train_steps_per_epoch}')
-    # val_steps_per_epoch = \
-    #     dataset_info.splits["validation"].num_examples // batch_size
+    train_steps_per_epoch = dataset_info.splits["train"].num_examples // batch_size
+    print(f'Train steps per epoch = {train_steps_per_epoch}')
+    val_steps_per_epoch = \
+        dataset_info.splits["test"].num_examples // batch_size
 
-    # train_steps = 4 * 100000
-    # epochs = train_steps // train_steps_per_epoch
+    train_steps = 4 * 100000
+    epochs = train_steps // train_steps_per_epoch
 
-    epochs = 50
+    print(f'Number of epochs = {epochs}')
 
-    # Running 1 training step,
-    # remove `.take` when training on the full dataset
-    import os
     if os.path.exists(checkpoint_path):
         model = tf.keras.saving.load_model(checkpoint_path)
 
     model.fit(
-        train_dataset.take(1),
+        train_dataset,
+        validation_data=val_dataset,
         epochs=epochs,
         callbacks=callbacks_list,
         verbose=1
     )
-
-    # model.save('./data/model.keras')
 
     def prepare_image(image):
         image, _, ratio = resize_and_pad_image(image, jitter=None)
         image = tf.keras.applications.resnet.preprocess_input(image)
         return tf.expand_dims(image, axis=0), ratio
 
-    # Change this to `model_dir` when not using the downloaded weights
-    # weights_dir = "data"
-    # latest_checkpoint = tf.train.latest_checkpoint(weights_dir)
-    # model = keras.models.load_model('./data/model.keras')
 
     image = tf.keras.Input(shape=[None, None, 3], name="image")
     predictions = model(image, training=False)
     detections = DecodePredictions(confidence_threshold=0.5)(image, predictions)
     inference_model = tf.keras.Model(inputs=image, outputs=detections)
 
-    # val_dataset = tfds.load("coco/2017", split="validation", data_dir="data")
     # int2str = dataset_info.features["objects"]["label"].int2str
 
     def get_iou(ground_truth, pred):
