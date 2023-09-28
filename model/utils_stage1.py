@@ -94,7 +94,8 @@ def visualize_detections(
     ax = plt.gca()
     #for box, _cls, score in zip(boxes, classes, scores):
     for box, score in zip(boxes, scores):
-        text = "{:.2f}".format(score[0])
+        class_name = classes[np.argmax(score)]
+        text = "{} {:.2f}".format(class_name, np.max(score))
         x1, y1, x2, y2, kpx1, kpy1, kpx2, kpy2, kpx3, kpy3, kpx4, kpy4 = box
         w, h = x2 - x1, y2 - y1
         image = cv2.rectangle(image, [np.int32(x1), np.int32(y1)], [np.int32(x2), np.int32(y2)], (0, 255, 0))
