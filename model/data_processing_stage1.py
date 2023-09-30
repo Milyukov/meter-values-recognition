@@ -1,5 +1,5 @@
 import tensorflow as tf
-from utils_stage1 import *
+from model.utils_stage1 import *
 
 def random_flip_horizontal(image, boxes):
     """Flips image and boxes horizontally with 50% chance

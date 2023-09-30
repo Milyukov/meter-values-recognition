@@ -66,7 +66,7 @@ if __name__ == '__main__':
     ]
 
     (train_dataset, val_dataset, test_dataset), dataset_info = tfds.load(
-        "meter_values_dataset_stage1", split=["train", "val", "test"], with_info=True, data_dir="/home/gleb/tensorflow_datasets",
+        "meter_values_dataset_stage1", split=["train", "validation", "test"], with_info=True, data_dir="/home/gleb/tensorflow_datasets",
         read_config=tfds.ReadConfig(try_autocache=False)
     )
 
@@ -110,10 +110,11 @@ if __name__ == '__main__':
 
     print(f'Number of epochs = {epochs}')
 
-    if os.path.exists(checkpoint_path):
-        model = tf.keras.saving.load_model(checkpoint_path)
-    
-    mlflow.keras.autolog()
+    # if os.path.exists(checkpoint_path):
+    #     model = tf.keras.saving.load_model(checkpoint_path)
+    model.build(input_shape=(1, 1024, 1024, 3))
+    loss = model.evaluate(test_dataset.take(1))
+    mlflow.tensorflow.autolog()
     history = model.fit(
         train_dataset,
         validation_data=val_dataset,
@@ -121,6 +122,3 @@ if __name__ == '__main__':
         callbacks=callbacks_list,
         verbose=1
     )
-
-    loss = model.evaluate(test_dataset)
-    mlflow.log_metric("Test loss", loss)
