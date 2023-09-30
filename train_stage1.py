@@ -47,7 +47,7 @@ if __name__ == '__main__':
     model = RetinaNet(num_classes, resnet50_backbone)
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
-    model.compile(loss=loss_fn, optimizer=optimizer, run_eagerly=True)
+    model.compile(loss=loss_fn, optimizer=optimizer, run_eagerly=False)
 
     logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
