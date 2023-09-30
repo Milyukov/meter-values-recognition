@@ -23,7 +23,7 @@ def run(queue, run_dir, hparams):
     batch_size = 8
     autotune = tf.data.AUTOTUNE
     (train_dataset, val_dataset, test_dataset), dataset_info = tfds.load(
-        "meter_values_dataset_stage1", split=["train", "validation", "test"], with_info=True,
+        "meter_values_dataset_stage1", split=["train", "val", "test"], with_info=True,
         read_config=tfds.ReadConfig(try_autocache=False)
     )
     #train_dataset = train_dataset[0]

@@ -1,18 +1,16 @@
 from datetime import datetime
 import os
-import numpy as np
-import zipfile
 import tensorflow_datasets as tfds
 
-from model.data_processing_stage1 import LabelEncoder, preprocess_data, resize_and_pad_image
+from model.data_processing_stage1 import LabelEncoder, preprocess_data
 from model.model_stage1 import *
-from model.utils_stage1 import visualize_detections
 from tensorflow import keras
 
 import gc
 import psutil
 
-import matplotlib.pyplot as plt
+import mlflow
+import mlflow.keras
 
 class MemoryUsageCallbackExtended(tf.keras.callbacks.Callback):
   '''Monitor memory usage on epoch begin and end, collect garbage'''
@@ -25,17 +23,6 @@ class MemoryUsageCallbackExtended(tf.keras.callbacks.Callback):
     print('Memory usage on epoch end:   {}'.format(psutil.Process(os.getpid()).memory_info().rss))
     gc.collect()
     tf.keras.backend.clear_session()
-
-def download_extract_dataset(url):
-    try:
-        filename = os.path.join(os.getcwd(), "data.zip")
-        keras.utils.get_file(filename, url)
-
-        with zipfile.ZipFile("data.zip", "r") as z_fp:
-            z_fp.extractall("./")
-        return True
-    except:
-       return False
 
 if __name__ == '__main__':
     config = tf.compat.v1.ConfigProto()
@@ -78,8 +65,8 @@ if __name__ == '__main__':
         tensorboard_callback
     ]
 
-    (train_dataset, val_dataset), dataset_info = tfds.load(
-        "meter_values_dataset_stage1", split=["train", "test"], with_info=True, data_dir="/home/gleb/tensorflow_datasets",
+    (train_dataset, val_dataset, test_dataset), dataset_info = tfds.load(
+        "meter_values_dataset_stage1", split=["train", "val", "test"], with_info=True, data_dir="/home/gleb/tensorflow_datasets",
         read_config=tfds.ReadConfig(try_autocache=False)
     )
 
@@ -104,6 +91,14 @@ if __name__ == '__main__':
     val_dataset = val_dataset.apply(tf.data.experimental.ignore_errors())
     val_dataset = val_dataset.prefetch(autotune)
 
+    test_dataset = test_dataset.map(preprocess_data, num_parallel_calls=autotune)
+    test_dataset = test_dataset.padded_batch(
+        batch_size=1, padding_values=(0.0, 1e-8, -1), drop_remainder=True
+    )
+    test_dataset = test_dataset.map(label_encoder.encode_batch, num_parallel_calls=autotune)
+    test_dataset = test_dataset.apply(tf.data.experimental.ignore_errors())
+    test_dataset = test_dataset.prefetch(autotune)
+
     # Uncomment the following lines, when training on full dataset
     train_steps_per_epoch = dataset_info.splits["train"].num_examples // batch_size
     print(f'Train steps per epoch = {train_steps_per_epoch}')
@@ -117,11 +112,15 @@ if __name__ == '__main__':
 
     if os.path.exists(checkpoint_path):
         model = tf.keras.saving.load_model(checkpoint_path)
-
-    model.fit(
+    
+    mlflow.keras.autolog()
+    history = model.fit(
         train_dataset,
         validation_data=val_dataset,
         epochs=epochs,
         callbacks=callbacks_list,
         verbose=1
     )
+
+    loss = model.evaluate(test_dataset)
+    mlflow.log_metric("Test loss", loss)
