@@ -1,7 +1,7 @@
 import tensorflow_datasets as tfds
 
-from data_processing_stage1 import LabelEncoder, preprocess_data
-from model_stage1 import *
+from model.data_processing_stage1 import LabelEncoder, preprocess_data
+from model.model_stage1 import *
 
 import datetime
 import multiprocessing

@@ -1,9 +1,9 @@
 import os
 import tensorflow_datasets as tfds
 
-from data_processing_stage2 import LabelEncoder, preprocess_data, resize_and_pad_image
-from model_stage2 import *
-from utils_stage2 import visualize_detections
+from model.data_processing_stage2 import LabelEncoder, preprocess_data, resize_and_pad_image
+from model.model_stage2 import *
+from model.utils_stage2 import visualize_detections
 import tensorflow as tf
 
 import gc
