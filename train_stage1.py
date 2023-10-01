@@ -36,8 +36,8 @@ if __name__ == '__main__':
     num_classes = 4
     batch_size = 8
 
-    learning_rates = [0.01, 0.001, 0.0005]#[2.5e-06, 0.000625, 0.00125, 0.0025, 0.00025, 2.5e-05]
-    learning_rate_boundaries = [1, 10]#[125, 250,500, 240000, 360000] 
+    learning_rates = [0.0001, 0.00001, 0.000005]#[2.5e-06, 0.000625, 0.00125, 0.0025, 0.00025, 2.5e-05]
+    learning_rate_boundaries = [23, 50]#[125, 250,500, 240000, 360000] 
     learning_rate_fn = tf.optimizers.schedules.PiecewiseConstantDecay(
         boundaries=learning_rate_boundaries, values=learning_rates
     )
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     loss_fn = RetinaNetLoss(num_classes)
     model = RetinaNet(num_classes, resnet50_backbone)
 
-    optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate_fn)
     model.compile(loss=loss_fn, optimizer=optimizer, run_eagerly=False)
 
     logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")

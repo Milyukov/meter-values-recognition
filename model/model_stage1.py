@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as ttf
 from tensorflow import keras
+from keras.regularizers import l2
 
 from model.utils_stage1 import *
 
@@ -29,14 +30,14 @@ class FeaturePyramid(keras.layers.Layer):
     def __init__(self, backbone=None, **kwargs):
         super().__init__(name="FeaturePyramid", **kwargs)
         self.backbone = backbone if backbone else get_backbone()
-        self.conv_c3_1x1 = keras.layers.Conv2D(256, 1, 1, "same")
-        self.conv_c4_1x1 = keras.layers.Conv2D(256, 1, 1, "same")
-        self.conv_c5_1x1 = keras.layers.Conv2D(256, 1, 1, "same")
-        self.conv_c3_3x3 = keras.layers.Conv2D(256, 3, 1, "same")
-        self.conv_c4_3x3 = keras.layers.Conv2D(256, 3, 1, "same")
-        self.conv_c5_3x3 = keras.layers.Conv2D(256, 3, 1, "same")
-        self.conv_c6_3x3 = keras.layers.Conv2D(256, 3, 2, "same")
-        self.conv_c7_3x3 = keras.layers.Conv2D(256, 3, 2, "same")
+        self.conv_c3_1x1 = keras.layers.Conv2D(256, 1, 1, "same", kernel_regularizer=l2(0.001))
+        self.conv_c4_1x1 = keras.layers.Conv2D(256, 1, 1, "same", kernel_regularizer=l2(0.001))
+        self.conv_c5_1x1 = keras.layers.Conv2D(256, 1, 1, "same", kernel_regularizer=l2(0.001))
+        self.conv_c3_3x3 = keras.layers.Conv2D(256, 3, 1, "same", kernel_regularizer=l2(0.001))
+        self.conv_c4_3x3 = keras.layers.Conv2D(256, 3, 1, "same", kernel_regularizer=l2(0.001))
+        self.conv_c5_3x3 = keras.layers.Conv2D(256, 3, 1, "same", kernel_regularizer=l2(0.001))
+        self.conv_c6_3x3 = keras.layers.Conv2D(256, 3, 2, "same", kernel_regularizer=l2(0.001))
+        self.conv_c7_3x3 = keras.layers.Conv2D(256, 3, 2, "same", kernel_regularizer=l2(0.001))
         self.upsample_2x = keras.layers.UpSampling2D(2)
 
     def call(self, images, training=False):
@@ -81,7 +82,8 @@ def build_head(output_filters, bias_init):
     kernel_init = tf.initializers.RandomNormal(0.0, 0.01)
     for _ in range(4):
         head.add(
-            keras.layers.Conv2D(256, 3, padding="same", kernel_initializer=kernel_init)
+            keras.layers.Conv2D(256, 3, padding="same", 
+                                kernel_initializer=kernel_init, kernel_regularizer=l2(0.001))
         )
         head.add(keras.layers.ReLU())
     head.add(
@@ -92,6 +94,7 @@ def build_head(output_filters, bias_init):
             padding="same",
             kernel_initializer=kernel_init,
             bias_initializer=bias_init,
+            kernel_regularizer=l2(0.001)
         )
     )
     return head
