@@ -98,11 +98,11 @@ def visualize_detections(
         text = "{} {:.2f}".format(class_name, np.max(score))
         x1, y1, x2, y2, kpx1, kpy1, kpx2, kpy2, kpx3, kpy3, kpx4, kpy4 = box
         w, h = x2 - x1, y2 - y1
-        image = cv2.rectangle(image, [np.int32(x1), np.int32(y1)], [np.int32(x2), np.int32(y2)], (0, 255, 0))
-        image = cv2.circle(image, [np.int32(kpx1), np.int32(kpy1)], 3, (0, 0, 255))
-        image = cv2.circle(image, [np.int32(kpx2), np.int32(kpy2)], 3, (0, 0, 255))
-        image = cv2.circle(image, [np.int32(kpx3), np.int32(kpy3)], 3, (0, 0, 255))
-        image = cv2.circle(image, [np.int32(kpx4), np.int32(kpy4)], 3, (0, 0, 255))
+        image = cv2.rectangle(image, [np.int32(x1), np.int32(y1)], [np.int32(x2), np.int32(y2)], (0, 255, 0), 5)
+        image = cv2.circle(image, [np.int32(kpx1), np.int32(kpy1)], 3, (0, 0, 255), 5)
+        image = cv2.circle(image, [np.int32(kpx2), np.int32(kpy2)], 3, (0, 0, 255), 5)
+        image = cv2.circle(image, [np.int32(kpx3), np.int32(kpy3)], 3, (0, 0, 255), 5)
+        image = cv2.circle(image, [np.int32(kpx4), np.int32(kpy4)], 3, (0, 0, 255), 5)
         #ax.add_patch(patch)
         ax.text(
             x1,
@@ -112,7 +112,7 @@ def visualize_detections(
             clip_box=ax.clipbox,
             clip_on=True,
         )
-    plt.imshow(image)
+    plt.imshow(image[:, :, ::-1])
     plt.show()
     return ax
 
