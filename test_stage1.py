@@ -3,8 +3,8 @@ import cv2
 import argparse
 import tensorflow_datasets as tfds
 
-from data_processing_stage1 import LabelEncoder, preprocess_data
-from model_stage1 import *
+from model.data_processing_stage1 import LabelEncoder, preprocess_data
+from model.model_stage1 import *
 from tensorflow import keras
 
 parser = argparse.ArgumentParser()
@@ -167,7 +167,7 @@ if __name__ == '__main__':
                         tn[i] += 1
                 pass
             for gt_index, gt_bbox in enumerate(gt_bboxes):
-                gt_class = gt_labels[gt_index]
+                gt_class = int(gt_labels[gt_index])
                 gt_found = False
                 if len(bboxes) == 0:
                     # FN += 1
