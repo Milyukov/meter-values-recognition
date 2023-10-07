@@ -10,6 +10,8 @@ from tensorflow import keras
 parser = argparse.ArgumentParser()
 parser.add_argument("model", help="absolute path to model files", type=str)
 parser.add_argument("dataset", help="path to dataset", type=str)
+parser.add_argument("binary", help="calc binary classification metrics", type=bool, 
+                    default=False, required=False)
 
 class ClassSpecificTruePositives(tf.keras.metrics.Metric):
 
@@ -80,6 +82,18 @@ def generate_mask(bbox, height, width):
                         pts = [points], color =(1,))
     return mask
 
+def update_confusion_matrix(confusion_matrix, gt_class, pred_class):
+    if gt_class == 0:
+        if pred_class == 1:
+            confusion_matrix['fp'] += 1
+        else:
+            confusion_matrix['tn'] += 1
+    else:
+        if pred_class == 1:
+            confusion_matrix['tp'] += 1
+        else:
+            confusion_matrix['fn'] += 1
+
 if __name__ == '__main__':
     args = parser.parse_args()
 
@@ -111,6 +125,7 @@ if __name__ == '__main__':
     fp = {i: 0 for i in range(num_classes)}
     tn = {i: 0 for i in range(num_classes)}
     tp = {i: 0 for i in range(num_classes)}
+    confusion_matrix = {'fp': 0, 'tp': 0, 'fn': 0, 'tn': 0}
     thresholds = [0.9]
 
     if os.path.exists(checkpoint_path):
@@ -168,19 +183,32 @@ if __name__ == '__main__':
                     # for each class
                     for pred_index, pred_bbox in enumerate(kept_bboxes):
                         # FP += len(bboxes of that class)
-                        fp[np.argmax(kept_scores[pred_index])] += 1    
+                        pred_class = np.argmax(kept_scores[pred_index])
+                        if args.binary:
+                            pred_class = pred_class % 2
+                            update_confusion_matrix(confusion_matrix, gt_class, pred_class)
+                        else:
+                            fp[pred_class] += 1    
                 else:
                     # for each class
                     # TN += 1
-                    for i in range(num_classes):
-                        tn[i] += 1
+                    if args.binary:
+                        update_confusion_matrix(confusion_matrix, gt_class, pred_class)
+                    else:
+                        for i in range(num_classes):
+                            tn[i] += 1
                 pass
             for gt_index, gt_bbox in enumerate(gt_bboxes):
                 gt_class = int(gt_labels[gt_index])
+                if args.binary:
+                    gt_class = gt_class % 2
                 gt_found = False
                 if len(kept_bboxes) == 0:
                     # FN += 1
-                    fn[gt_class] += 1
+                    if args.binary:
+                        update_confusion_matrix(confusion_matrix, gt_class, pred_class)
+                    else:
+                        fn[gt_class] += 1
                     continue
                 # generate mask for gt polygon
                 gt_bbox = np.array(gt_bbox)
@@ -203,8 +231,13 @@ if __name__ == '__main__':
                 gt_mask = generate_mask(gt_bbox, height, width)
                 for pred_index, pred_bbox in enumerate(kept_bboxes):
                     pred_class = np.argmax(kept_scores[pred_index])
+                    if args.binary:
+                        pred_class = pred_class % 2
                     if gt_class != pred_class:
-                        fp[pred_class] += 1
+                        if args.binary:
+                            update_confusion_matrix(confusion_matrix, gt_class, pred_class)
+                        else:
+                            fp[pred_class] += 1
                         continue
                     # generate mask for prediction
                     pred_mask = generate_mask(pred_bbox, height, width)
@@ -214,14 +247,24 @@ if __name__ == '__main__':
                         # if IoU > thr
                         if iou > thr:
                             gt_found = True
-                            tp[gt_class] += 1
+                            if args.binary:
+                                update_confusion_matrix(confusion_matrix, gt_class, gt_class)
+                            else:
+                                tp[gt_class] += 1
                         else:
-                            fp[gt_class] += 1
+                            if args.binary:
+                                update_confusion_matrix(confusion_matrix, gt_class, int(not gt_class))
+                            else:
+                                fp[gt_class] += 1
                 if not gt_found:
                     fn[gt_class] += 1
-        for i in range(num_classes):
-            print(f'Class # {i}')
-            print(f'TP: {tp[i]}, FP: {fp[i]}')
-            print(f'FN: {fn[i]}, TN: {tn[i]}')
+        if args.binary:
+            print(confusion_matrix)
+        else:
+            for i in range(num_classes):
+                print(f'Class # {i}')
+                print(f'TP: {tp[i]}, FP: {fp[i]}')
+                print(f'FN: {fn[i]}, TN: {tn[i]}')
+        
     else:
         print('No checkpoint found')
