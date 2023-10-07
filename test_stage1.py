@@ -8,10 +8,10 @@ from model.model_stage1 import *
 from tensorflow import keras
 
 parser = argparse.ArgumentParser()
-parser.add_argument("model", help="absolute path to model files", type=str)
-parser.add_argument("dataset", help="path to dataset", type=str)
-parser.add_argument("binary", help="calc binary classification metrics", type=bool, 
-                    default=False, required=False)
+parser.add_argument("--model", help="absolute path to model files", type=str)
+parser.add_argument("--dataset", help="path to dataset", type=str)
+parser.add_argument("--binary", help="calc binary classification metrics", 
+                    action="store_true")
 
 class ClassSpecificTruePositives(tf.keras.metrics.Metric):
 
@@ -97,6 +97,8 @@ def update_confusion_matrix(confusion_matrix, gt_class, pred_class):
 if __name__ == '__main__':
     args = parser.parse_args()
 
+    print(f'Binary: {args.binary}')
+
     label_encoder = LabelEncoder()
     num_classes = 4
     batch_size = 1
@@ -126,7 +128,7 @@ if __name__ == '__main__':
     tn = {i: 0 for i in range(num_classes)}
     tp = {i: 0 for i in range(num_classes)}
     confusion_matrix = {'fp': 0, 'tp': 0, 'fn': 0, 'tn': 0}
-    thresholds = [0.9]
+    thresholds = [0.5]
 
     if os.path.exists(checkpoint_path):
         model = tf.keras.saving.load_model(checkpoint_path)
@@ -174,7 +176,6 @@ if __name__ == '__main__':
             height, width, _ = image.shape
             im = image.numpy()
             im, _, ratio = resize_and_pad_image(image, min_side=height, max_side=width, jitter=None)
-            print(im.shape)
             im = im.numpy()
             gt_bboxes = example['objects']['bbox']
             gt_labels = example['objects']['label']
@@ -186,9 +187,10 @@ if __name__ == '__main__':
                         pred_class = np.argmax(kept_scores[pred_index])
                         if args.binary:
                             pred_class = pred_class % 2
+                            print('No ground truth')
                             update_confusion_matrix(confusion_matrix, gt_class, pred_class)
                         else:
-                            fp[pred_class] += 1    
+                            fp[pred_class] += 1 
                 else:
                     # for each class
                     # TN += 1
