@@ -3,7 +3,7 @@ import cv2
 import argparse
 import tensorflow_datasets as tfds
 
-from model.data_processing_stage1 import LabelEncoder, preprocess_data
+from model.data_processing_stage1 import LabelEncoder, preprocess_test_data, resize_and_pad_image
 from model.model_stage1 import *
 from tensorflow import keras
 
@@ -69,7 +69,12 @@ def get_iou(ground_truth, pred):
     return iou
 
 def generate_mask(bbox, height, width):
-    points = np.array(np.reshape(bbox[4:], (-1, 2)))
+    #points = np.array(np.reshape(bbox[4:], (-1, 2)))
+    points = np.array([
+        [bbox[4], bbox[5]], 
+        [bbox[6], bbox[7]],
+        [bbox[8], bbox[9]],
+        [bbox[10], bbox[11]]])
     points = points.astype(np.int32)
     mask = cv2.fillPoly(np.zeros((height, width), dtype=np.uint8), 
                         pts = [points], color =(1,))
@@ -91,7 +96,7 @@ if __name__ == '__main__':
 
     autotune = tf.data.AUTOTUNE
 
-    test_dataset_processed = test_dataset.map(preprocess_data, num_parallel_calls=autotune)
+    test_dataset_processed = test_dataset.map(preprocess_test_data, num_parallel_calls=autotune)
     test_dataset_processed = test_dataset_processed.padded_batch(
         batch_size=1, padding_values=(0.0, 1e-8, -1), drop_remainder=True
     )
@@ -152,6 +157,10 @@ if __name__ == '__main__':
             # loop through example[1] to find all valid GT boxes
             image = example['image']
             height, width, _ = image.shape
+            im = image.numpy()
+            im, _, ratio = resize_and_pad_image(image, min_side=height, max_side=width, jitter=None)
+            print(im.shape)
+            im = im.numpy()
             gt_bboxes = example['objects']['bbox']
             gt_labels = example['objects']['label']
             if len(gt_bboxes) == 0:
@@ -169,7 +178,7 @@ if __name__ == '__main__':
             for gt_index, gt_bbox in enumerate(gt_bboxes):
                 gt_class = int(gt_labels[gt_index])
                 gt_found = False
-                if len(bboxes) == 0:
+                if len(kept_bboxes) == 0:
                     # FN += 1
                     fn[gt_class] += 1
                     continue
@@ -177,7 +186,20 @@ if __name__ == '__main__':
                 gt_bbox = np.array(gt_bbox)
                 gt_bbox[::2] *= height
                 gt_bbox[1::2] *= width
-                gt_bbox = gt_bbox[::-1]
+                gt_bbox = [
+                    gt_bbox[1], 
+                    gt_bbox[0],
+                    gt_bbox[3], 
+                    gt_bbox[2],
+                    gt_bbox[5], 
+                    gt_bbox[4],
+                    gt_bbox[7], 
+                    gt_bbox[6],
+                    gt_bbox[9], 
+                    gt_bbox[8],
+                    gt_bbox[11], 
+                    gt_bbox[10]
+                    ]
                 gt_mask = generate_mask(gt_bbox, height, width)
                 for pred_index, pred_bbox in enumerate(kept_bboxes):
                     pred_class = np.argmax(kept_scores[pred_index])

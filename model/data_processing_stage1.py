@@ -87,9 +87,46 @@ def preprocess_data(sample):
     bbox = swap_xy(sample["objects"]["bbox"])
     class_id = tf.cast(sample["objects"]["label"], dtype=tf.int32)
 
-    #image, bbox = random_flip_horizontal(image, bbox)
-    image, image_shape, _ = resize_and_pad_image(image, jitter=None)
+    image, bbox = random_flip_horizontal(image, bbox)
+    image, image_shape, _ = resize_and_pad_image(image)
+    bbox = tf.stack(
+        [
+            bbox[:, 0] * image_shape[1],
+            bbox[:, 1] * image_shape[0],
+            bbox[:, 2] * image_shape[1],
+            bbox[:, 3] * image_shape[0],
+            bbox[:, 4] * image_shape[1],
+            bbox[:, 5] * image_shape[0],
+            bbox[:, 6] * image_shape[1],
+            bbox[:, 7] * image_shape[0],
+            bbox[:, 8] * image_shape[1],
+            bbox[:, 9] * image_shape[0],
+            bbox[:, 10] * image_shape[1],
+            bbox[:, 11] * image_shape[0],
+        ],
+        axis=-1,
+    )
+    bbox = convert_to_xywh(bbox)
+    return image, bbox, class_id
 
+def preprocess_test_data(sample):
+    """Applies preprocessing step to a single sample
+
+    Arguments:
+      sample: A dict representing a single training sample.
+
+    Returns:
+      image: Resized and padded image with random horizontal flipping applied.
+      bbox: Bounding boxes with the shape `(num_objects, 4)` where each box is
+        of the format `[x, y, width, height]`.
+      class_id: An tensor representing the class id of the objects, having
+        shape `(num_objects,)`.
+    """
+    image = sample["image"]
+    bbox = swap_xy(sample["objects"]["bbox"])
+    class_id = tf.cast(sample["objects"]["label"], dtype=tf.int32)
+
+    image, image_shape, _ = resize_and_pad_image(image, 1024, 1024, jitter=None)
     bbox = tf.stack(
         [
             bbox[:, 0] * image_shape[1],
