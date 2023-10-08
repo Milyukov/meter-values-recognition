@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import tensorflow_datasets as tfds
 
@@ -45,6 +46,8 @@ model = RetinaNet(num_classes, resnet50_backbone)
 optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
 model.compile(loss=loss_fn, optimizer=optimizer)#, run_eagerly=True)
 
+logdir = "logs/stage2/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
+tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
 checkpoint_path = "retinanet/stage2.keras"
 callbacks_list = [
     tf.keras.callbacks.ModelCheckpoint(
@@ -55,12 +58,13 @@ callbacks_list = [
         save_freq=1,
         verbose=1,
     ),
-    MemoryUsageCallbackExtended()
+    MemoryUsageCallbackExtended(),
+    tensorboard_callback
 ]
 
 (train_dataset, val_dataset), dataset_info = tfds.load(
     "meter_values_dataset_stage2", split=["train", "validation"], with_info=True,
-    read_config=tfds.ReadConfig(try_autocache=False), data_dir="/home/gleb/Projects/counters-datasets/meter_values_dataset_stage2"
+    read_config=tfds.ReadConfig(try_autocache=False), data_dir="/mnt/images/counters-datasets/meter_values_dataset_stage2"
 )
 
 autotune = tf.data.AUTOTUNE
@@ -98,7 +102,7 @@ if os.path.exists(checkpoint_path):
     model = tf.keras.saving.load_model(checkpoint_path)
 
 model.fit(
-    train_dataset.take,
+    train_dataset,
     validation_data=val_dataset,
     epochs=epochs,
     callbacks=callbacks_list,
