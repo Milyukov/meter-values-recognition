@@ -1,5 +1,5 @@
 import tensorflow as tf
-from utils_stage2 import *
+from model.utils_stage2 import *
 
 def random_flip_horizontal(image, boxes):
     """Flips image and boxes horizontally with 50% chance
@@ -22,7 +22,7 @@ def random_flip_horizontal(image, boxes):
 
 
 def resize_and_pad_image(
-    image, min_side=800.0, max_side=1333.0, jitter=[640, 1024], stride=128.0
+    image, min_side=256.0, max_side=256.0, jitter=[256, 512], stride=128.0
 ):
     """Resizes and pads image while preserving aspect ratio.
 

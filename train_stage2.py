@@ -29,11 +29,11 @@ class MemoryUsageCallbackExtended(tf.keras.callbacks.Callback):
 model_dir = "retinanet/"
 label_encoder = LabelEncoder()
 
-num_classes = 15
-batch_size = 1
+num_classes = 17
+batch_size = 16
 
-learning_rates = [0.00005, 0.000005]#[2.5e-06, 0.000625, 0.00125, 0.0025, 0.00025, 2.5e-05]
-learning_rate_boundaries = [25]#[125, 250,500, 240000, 360000] 
+learning_rates = [0.001, 0.00005]#[2.5e-06, 0.000625, 0.00125, 0.0025, 0.00025, 2.5e-05]
+learning_rate_boundaries = [20]#[125, 250,500, 240000, 360000] 
 learning_rate_fn = tf.optimizers.schedules.PiecewiseConstantDecay(
     boundaries=learning_rate_boundaries, values=learning_rates
 )
@@ -42,7 +42,7 @@ resnet50_backbone = get_backbone()
 loss_fn = RetinaNetLoss(num_classes)
 model = RetinaNet(num_classes, resnet50_backbone)
 
-optimizer = tf.keras.optimizers.Adam(learning_rate=0.000005)
+optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
 model.compile(loss=loss_fn, optimizer=optimizer)#, run_eagerly=True)
 
 checkpoint_path = "retinanet/stage2.keras"
@@ -59,31 +59,14 @@ callbacks_list = [
 ]
 
 (train_dataset, val_dataset), dataset_info = tfds.load(
-    "meter_values_dataset_stage2", split=["train", "test"], with_info=True,
-    read_config=tfds.ReadConfig(try_autocache=False)
+    "meter_values_dataset_stage2", split=["train", "validation"], with_info=True,
+    read_config=tfds.ReadConfig(try_autocache=False), data_dir="/home/gleb/Projects/counters-datasets/meter_values_dataset_stage2"
 )
 
-# autotune = tf.data.AUTOTUNE
+autotune = tf.data.AUTOTUNE
 
-import cv2
-for example in train_dataset:
-    image_loaded = example['image'].numpy()
-    # h, w, c = image_loaded.shape
-    # bboxes = example['objects']['bbox']
-    # labels = example['objects']['label']
-    # for bbox, label in zip(bboxes, labels):
-    #    xmin = int(bbox[1] * w)
-    #    ymin = int(bbox[0] * h)
-    #    xmax = int(bbox[3] * w)
-    #    ymax = int(bbox[2] * h)
-    #    cv2.putText(image_loaded, f'{label}', (xmin, ymin - 20) if label < 10 else (xmin, ymax + 20), 0, 0.7, (0, 255, 0))
-    #    image_loaded = cv2.rectangle(image_loaded, (xmin, ymin), (xmax, ymax), (0, 255, 0))
-    # plt.imshow(image_loaded)
-    # plt.show()
-    break
-
-train_dataset = train_dataset.map(preprocess_data, num_parallel_calls=1)#autotune)
-# train_dataset = train_dataset.shuffle(batch_size)
+train_dataset = train_dataset.map(preprocess_data, num_parallel_calls=autotune)
+train_dataset = train_dataset.shuffle(batch_size)
 train_dataset = train_dataset.padded_batch(
     batch_size=batch_size, padding_values=(0.0, 1e-8, -1), drop_remainder=True
 )
@@ -93,33 +76,30 @@ train_dataset = train_dataset.map(
 train_dataset = train_dataset.apply(tf.data.experimental.ignore_errors())
 train_dataset = train_dataset.prefetch(0)
 
-# val_dataset = val_dataset.map(preprocess_data, num_parallel_calls=autotune)
-# val_dataset = val_dataset.padded_batch(
-#     batch_size=1, padding_values=(0.0, 1e-8, -1), drop_remainder=True
-# )
-# val_dataset = val_dataset.map(label_encoder.encode_batch, num_parallel_calls=1)#autotune)
-# val_dataset = val_dataset.apply(tf.data.experimental.ignore_errors())
-#val_dataset = val_dataset.prefetch(autotune)
+val_dataset = val_dataset.map(preprocess_data, num_parallel_calls=autotune)
+val_dataset = val_dataset.padded_batch(
+    batch_size=1, padding_values=(0.0, 1e-8, -1), drop_remainder=True
+)
+val_dataset = val_dataset.map(label_encoder.encode_batch, num_parallel_calls=autotune)
+val_dataset = val_dataset.apply(tf.data.experimental.ignore_errors())
+val_dataset = val_dataset.prefetch(autotune)
 
 # Uncomment the following lines, when training on full dataset
 train_steps_per_epoch = dataset_info.splits["train"].num_examples // batch_size
 print(f'Train steps per epoch = {train_steps_per_epoch}')
-# val_steps_per_epoch = \
-#     dataset_info.splits["validation"].num_examples // batch_size
+val_steps_per_epoch = \
+    dataset_info.splits["validation"].num_examples // batch_size
 
-# train_steps = 4 * 100000
-# epochs = train_steps // train_steps_per_epoch
+train_steps = 4 * 100000
+epochs = train_steps // train_steps_per_epoch
 
-epochs = 60
-
-# Running 100 training and 50 validation steps,
-# remove `.take` when training on the full dataset
 import os
 if os.path.exists(checkpoint_path):
     model = tf.keras.saving.load_model(checkpoint_path)
 
 model.fit(
-    train_dataset.take(1),
+    train_dataset.take,
+    validation_data=val_dataset,
     epochs=epochs,
     callbacks=callbacks_list,
     verbose=1,
@@ -136,10 +116,9 @@ predictions = model(image, training=False)
 detections = DecodePredictions(confidence_threshold=0.5)(image, predictions)
 inference_model = tf.keras.Model(inputs=image, outputs=detections)
 
-# val_dataset = tfds.load("coco/2017", split="validation", data_dir="data")
 int2str = dataset_info.features["objects"]["label"].int2str
 
-for sample in [image_loaded]:#val_dataset.take(2):
+for sample in val_dataset.take(2):
     image = tf.cast(sample, dtype=tf.float32)
     input_image, ratio = prepare_image(image)
     print(input_image.shape)
