@@ -20,10 +20,10 @@ def run(queue, run_dir, hparams):
     session = tf.compat.v1.Session(config=config)
 
     label_encoder = LabelEncoder()
-    batch_size = 8
+    batch_size = 16
     autotune = tf.data.AUTOTUNE
     (train_dataset, val_dataset, test_dataset), dataset_info = tfds.load(
-        "meter_values_dataset_stage1", split=["train", "val", "test"], with_info=True, 
+        "meter_values_dataset_stage2", split=["train", "validation", "test"], with_info=True, 
         data_dir="/mnt/images/counters-datasets/meter_values_dataset_stage2",
         read_config=tfds.ReadConfig(try_autocache=False)
     )
