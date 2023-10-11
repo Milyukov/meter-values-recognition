@@ -20,7 +20,6 @@ def random_flip_horizontal(image, boxes):
         )
     return image, boxes
 
-
 def resize_and_pad_image(
     image, min_side=256.0, max_side=256.0, jitter=[256, 512], stride=128.0
 ):

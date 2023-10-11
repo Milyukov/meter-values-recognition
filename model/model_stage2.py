@@ -114,8 +114,16 @@ class RetinaNet(keras.Model):
         prior_probability = tf.constant_initializer(-np.log((1 - 0.01) / 0.01))
         self.cls_head = build_head(9 * num_classes, prior_probability)
         self.box_head = build_head(9 * 4, "zeros")
+        self.augmentation = keras.Sequential(
+            [
+                keras.layers.RandomBrightness(0.2),
+                keras.layers.RandomContrast(0.2)
+                ]
+        )
 
     def call(self, image, training=False):
+        if training:
+            image = self.augmentation(image)
         features = self.fpn(image, training=training)
         N = tf.shape(image)[0]
         cls_outputs = []
