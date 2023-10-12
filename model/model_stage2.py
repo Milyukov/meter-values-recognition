@@ -108,7 +108,7 @@ class RetinaNet(keras.Model):
         Currently supports ResNet50 only.
     """
 
-    def __init__(self, num_classes, backbone=None, **kwargs):
+    def __init__(self, num_classes, backbone=None, augmentation=None, **kwargs):
         super().__init__(name="RetinaNet", **kwargs)
         self.fpn = FeaturePyramid(backbone)
         self.num_classes = num_classes
@@ -116,12 +116,15 @@ class RetinaNet(keras.Model):
         prior_probability = tf.constant_initializer(-np.log((1 - 0.01) / 0.01))
         self.cls_head = build_head(9 * num_classes, prior_probability)
         self.box_head = build_head(9 * 4, "zeros")
-        self.augmentation = keras.Sequential(
-            [
-                keras.layers.RandomBrightness(0.2),
-                keras.layers.RandomContrast(0.2)
-                ]
-        )
+        if augmentation is None:
+            self.augmentation = keras.Sequential(
+                [
+                    keras.layers.RandomBrightness(0.2),
+                    keras.layers.RandomContrast(0.2)
+                    ]
+            )
+        else:
+            self.augmentation = augmentation
 
     def call(self, image, training=False):
         if training:
@@ -143,6 +146,7 @@ class RetinaNet(keras.Model):
         base_config = super().get_config()
         config = {
             "num_classes": keras.saving.serialize_keras_object(self.num_classes),
+            "augmentation": self.augmentation
         }
         return {**base_config, **config}
 
@@ -150,7 +154,9 @@ class RetinaNet(keras.Model):
     def from_config(cls, config):
         num_classes_config = config.pop("num_classes")
         num_classes = keras.saving.deserialize_keras_object(num_classes_config)
-        return cls(num_classes, **config)
+        augmentation_config = config.pop("augmentation")
+        augmentation = keras.saving.deserialize_keras_object(augmentation_config)
+        return cls(num_classes, augmentation=augmentation, **config)
     
 class DecodePredictions(tf.keras.layers.Layer):
     """A Keras layer that decodes predictions of the RetinaNet model.
