@@ -135,7 +135,7 @@ class RetinaNet(keras.Model):
     def get_config(self):
         base_config = super().get_config()
         config = {
-            "num_classes": keras.saving.serialize_keras_object(self.num_classes),
+            "num_classes": self.num_classes,
             #"fpn": keras.saving.serialize_keras_object(self.fpn),
             #"cls_head": keras.saving.serialize_keras_object(self.cls_head),
             #"box_head": keras.saving.serialize_keras_object(self.box_head),
@@ -305,7 +305,7 @@ class RetinaNetLoss(tf.losses.Loss):
     def get_config(self):
         base_config = super().get_config()
         config = {
-            "num_classes": keras.saving.serialize_keras_object(self._num_classes)
+            "num_classes": self._num_classes
         }
         return {**base_config, **config}
 

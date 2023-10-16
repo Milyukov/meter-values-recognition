@@ -145,8 +145,8 @@ class RetinaNet(keras.Model):
     def get_config(self):
         base_config = super().get_config()
         config = {
-            "num_classes": keras.saving.serialize_keras_object(self.num_classes),
-            "augmentation": self.augmentation
+            "num_classes": self.num_classes,
+            "augmentation": keras.saving.serialize_keras_object(self.augmentation)
         }
         return {**base_config, **config}
 
@@ -157,6 +157,7 @@ class RetinaNet(keras.Model):
         augmentation_config = config.pop("augmentation")
         augmentation = keras.saving.deserialize_keras_object(augmentation_config)
         return cls(num_classes, augmentation=augmentation, **config)
+
     
 class DecodePredictions(tf.keras.layers.Layer):
     """A Keras layer that decodes predictions of the RetinaNet model.
@@ -301,7 +302,7 @@ class RetinaNetLoss(tf.losses.Loss):
     def get_config(self):
         base_config = super().get_config()
         config = {
-            "num_classes": keras.saving.serialize_keras_object(self._num_classes)
+            "num_classes": self._num_classes
         }
         return {**base_config, **config}
 
