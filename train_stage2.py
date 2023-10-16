@@ -12,7 +12,7 @@ import psutil
 
 config = tf.compat.v1.ConfigProto()
 config.gpu_options.allow_growth = True
-config.gpu_options.per_process_gpu_memory_fraction = 0.7 # change this value as needed
+config.gpu_options.per_process_gpu_memory_fraction = 0.9 # change this value as needed
 session = tf.compat.v1.Session(config=config)
 
 class MemoryUsageCallbackExtended(tf.keras.callbacks.Callback):
@@ -33,8 +33,8 @@ label_encoder = LabelEncoder()
 num_classes = 17
 batch_size = 16
 
-learning_rates = [0.001, 0.00005]#[2.5e-06, 0.000625, 0.00125, 0.0025, 0.00025, 2.5e-05]
-learning_rate_boundaries = [20]#[125, 250,500, 240000, 360000] 
+learning_rates = [0.0001, 0.00001, 0.000005]#[2.5e-06, 0.000625, 0.00125, 0.0025, 0.00025, 2.5e-05]
+learning_rate_boundaries = [100, 500] #[125, 250,500, 240000, 360000] 
 learning_rate_fn = tf.optimizers.schedules.PiecewiseConstantDecay(
     boundaries=learning_rate_boundaries, values=learning_rates
 )
@@ -43,19 +43,28 @@ resnet50_backbone = get_backbone()
 loss_fn = RetinaNetLoss(num_classes)
 model = RetinaNet(num_classes, resnet50_backbone)
 
-optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
+optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate_fn)
 model.compile(loss=loss_fn, optimizer=optimizer)#, run_eagerly=True)
 
 logdir = "logs/stage2/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
 tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
 checkpoint_path = "retinanet/stage2.keras"
+checkpoint_backup_path = "retinanet/stage2_bak.keras"
 callbacks_list = [
     tf.keras.callbacks.ModelCheckpoint(
         filepath=checkpoint_path,
         monitor="loss",
         save_best_only=False,
         save_weights_only=False,
-        save_freq=1,
+        save_freq=200,
+        verbose=1,
+    ),
+    tf.keras.callbacks.ModelCheckpoint(
+        filepath=checkpoint_backup_path,
+        monitor="loss",
+        save_best_only=False,
+        save_weights_only=False,
+        save_freq=250,
         verbose=1,
     ),
     MemoryUsageCallbackExtended(),
