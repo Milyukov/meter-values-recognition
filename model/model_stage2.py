@@ -83,7 +83,7 @@ def build_head(output_filters, bias_init):
     kernel_init = tf.initializers.RandomNormal(0.0, 0.01)
     for _ in range(4):
         head.add(
-            keras.layers.Conv2D(256, 3, padding="same", kernel_initializer=kernel_init, kernel_regularizer=l2(0.1))
+            keras.layers.Conv2D(256, 3, padding="same", kernel_initializer=kernel_init, kernel_regularizer=l2(0.001))
         )
         head.add(keras.layers.ReLU())
     head.add(
@@ -94,7 +94,7 @@ def build_head(output_filters, bias_init):
             padding="same",
             kernel_initializer=kernel_init,
             bias_initializer=bias_init,
-            kernel_regularizer=l2(0.1)
+            kernel_regularizer=l2(0.001)
         )
     )
     return head
