@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 
+from shapely.geometry import Polygon
+
 def resize_image_keypoints(im, keypoints, width, height):
     h, w, c = im.shape
     delta_top = 0
@@ -106,33 +108,132 @@ def process_bboxes(im, bboxes, width, height):
 def extract_rectangle_area(im_resized, bbox, keypoints):
     # evaluate homography transform to warp and crop image inside keypoints
     # crop keypoints coordinates
-    x_min = np.min(keypoints[:, 0])
-    y_min = np.min(keypoints[:, 1])
+    x_min = np.min(keypoints[::2])
+    y_min = np.min(keypoints[1::2])
+    keypoints = np.array([
+        [keypoints[0], keypoints[1]], 
+        [keypoints[2], keypoints[3]], 
+        [keypoints[4], keypoints[5]], 
+        [keypoints[6], keypoints[7]]])
     keypoints[:, 0] -= x_min
     keypoints[:, 1] -= y_min
-    width = bbox[2]
-    height = bbox[3]
+    width = int(np.sqrt((keypoints[0][0] - keypoints[1][0]) ** 2 + (keypoints[0][1] - keypoints[1][1]) ** 2))
+    height = int(np.sqrt((keypoints[0][0] - keypoints[3][0]) ** 2 + (keypoints[0][1] - keypoints[3][1]) ** 2))
     keypoints_planar = np.array([[0, 0], [width, 0], [width, height], [0, height]], dtype=np.int32)
-    h, status = cv2.findHomography(keypoints.astype(np.int32), keypoints_planar)
 
-    # enhance area
+    h, status = cv2.findHomography(keypoints.astype(np.int32), keypoints_planar)
+    # for extended area
+    h_inv, status = cv2.findHomography(keypoints_planar, keypoints.astype(np.int32))
+
+    # extend area
     keypoints_planar_extended = keypoints_planar + np.array(
         [[-height//2, -2 * height//3], 
-         [height//2, -2 * height//3], 
-         [height//2, 2 * height//3], 
-         [-height//2, 2 * height//3]])
+        [height//2, -2 * height//3], 
+        [height//2, 2 * height//3], 
+        [-height//2, 2 * height//3]])
     # use inverse homography to choose new points on the original image
     keypoints_planar_extended = keypoints_planar_extended.reshape(-1,1,2).astype(np.float32)
-    keypoints_extended = cv2.perspectiveTransform(keypoints_planar_extended, h)
+    keypoints_extended = cv2.perspectiveTransform(keypoints_planar_extended, h_inv)
     keypoints_extended = keypoints_extended.reshape(-1, 2)
     keypoints_extended[:, 0] += x_min
     keypoints_extended[:, 1] += y_min
+
     # get bbox
     bbox = cv2.boundingRect(keypoints_extended.astype(np.int32))
-    width = bbox[2]
-    height = bbox[3]
+    width = int(np.sqrt((keypoints_extended[0][0] - keypoints_extended[1][0]) ** 2 + (keypoints_extended[0][1] - keypoints_extended[1][1]) ** 2))
+    height = int(np.sqrt((keypoints_extended[1][0] - keypoints_extended[2][0]) ** 2 + (keypoints_extended[1][1] - keypoints_extended[2][1]) ** 2))
+
+    # compute new homography matrix for extended area
+    x_min = np.min(keypoints_extended[:, 0])
+    y_min = np.min(keypoints_extended[:, 1])
+    keypoints_extended[:, 0] -= x_min
+    keypoints_extended[:, 1] -= y_min
+    keypoints_planar = np.array([[0, 0], [width, 0], [width, height], [0, height]], dtype=np.int32)
+    h, status = cv2.findHomography(keypoints_extended.astype(np.int32), keypoints_planar)
+    keypoints_extended[:, 0] += x_min
+    keypoints_extended[:, 1] += y_min
+
     # warp image area
-    im_dst = cv2.warpPerspective(im_resized[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]], h, (width, height))
-    im_dst = cv2.cvtColor(im_dst, cv2.COLOR_BGR2GRAY)
-    im_dst_eq = cv2.equalizeHist(im_dst)
-    return im_dst_eq
+    # extend image if bbox is out of image's plane
+    top = 0 if bbox[1] > 0 else -bbox[1]
+    bottom = 0 if bbox[3] < im_resized.shape[0] else bbox[3] - im_resized.shape[0]
+    left = 0 if bbox[0] > 0 else -bbox[0]
+    right = 0 if bbox[2] < im_resized.shape[1] else bbox[2] - im_resized.shape[1]
+    im_resized = cv2.copyMakeBorder(im_resized, top, bottom, left, right, cv2.BORDER_CONSTANT, value=0)
+
+    im_dst = cv2.warpPerspective(im_resized[bbox[1] + top:bbox[1] + top + bbox[3], 
+                                            bbox[0] + left:bbox[0] + left + bbox[2]], h, (width, height))
+    return im_dst
+
+def parse_analog_detection(detections):
+    num_detections = detections.valid_detections[0]
+    class_names= [f'{int(x)}' for x in detections.nmsed_classes[0][:num_detections]]
+    boxes = detections.nmsed_boxes[0][:num_detections]
+    scores = detections.nmsed_scores[0][:num_detections]
+    kept_indices = []
+    kept_boxes = []
+    kept_scores = []
+    kept_class_names = []
+    digits_after_fpoint = []
+    for box_index1, (box1, _cls1, score1) in enumerate(zip(boxes, class_names, scores)):
+        duplicated = False
+        x1, y1, x2, y2 = box1
+        w, h = x2 - x1, y2 - y1
+        polygon1 = Polygon([[x1, y1], 
+                            [x2, y1], 
+                            [x2, y2],
+                            [x1, y2]])
+        for box_index2, (box2, _cls2, score2) in enumerate(zip(boxes, class_names, scores)):
+            if box_index1 == box_index2:
+                continue
+            x1, y1, x2, y2 = box2
+            w, h = x2 - x1, y2 - y1
+            polygon2 = Polygon([[x1, y1], 
+                                [x2, y1], 
+                                [x2, y2],
+                                [x1, y2]])
+            intersection = polygon1.intersection(polygon2).area
+            union = polygon1.union(polygon2).area
+            iou = intersection / union
+            if _cls2 == '14':
+                if intersection > 0.2 * polygon1.area:
+                    digits_after_fpoint.append(box_index1)
+            elif iou > 0.9:
+                if score1 > score2:
+                    if not box_index1 in kept_indices:
+                        kept_indices.append(box_index1)
+                    duplicated = True
+                else:
+                    if not box_index2 in kept_indices:
+                        kept_indices.append(box_index2)
+                    duplicated = True
+                break
+        if not duplicated:
+            kept_indices.append(box_index1)
+    kept_boxes = boxes[kept_indices]
+    kept_scores = scores[kept_indices]
+    kept_class_names = np.array(class_names)[kept_indices]
+    one_hot_digits_after_fpoint = np.array([1 if i in digits_after_fpoint else 0 for i in range(len(boxes))])
+    one_hot_digits_after_fpoint = one_hot_digits_after_fpoint[kept_indices]
+    # sort by x-coordinate
+    indices = np.argsort(kept_boxes[:, 0])
+    xs = kept_boxes[indices][:, 0]
+    dist_between_digits = np.median(np.diff(xs))
+    one_hot_digits_after_fpoint = one_hot_digits_after_fpoint[indices]
+    fpoint_pos = -1
+    if np.any(one_hot_digits_after_fpoint > 0):
+        fpoint_pos = (one_hot_digits_after_fpoint > 0).argmax()
+    text = ''
+    for index in range(len(kept_class_names)):
+        if kept_class_names[indices][index] == '14':
+            continue
+        if index == fpoint_pos:
+            text += '.'
+        if index == 0:
+            text += kept_class_names[indices][index]
+        else:
+            num_of_unknown = (xs[index] - xs[index - 1]) / dist_between_digits
+            num_of_unknown = int(num_of_unknown + 0.5) - 1
+            text += 'x' * num_of_unknown + kept_class_names[indices][index]
+    return text, kept_boxes, kept_scores, kept_class_names
+            
