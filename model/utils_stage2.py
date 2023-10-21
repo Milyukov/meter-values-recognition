@@ -77,7 +77,7 @@ def compute_iou(boxes1, boxes2):
 
 
 def visualize_detections(
-    image, boxes, classes, scores, figsize=(7, 7), linewidth=1, color=[0, 0, 1]
+    filename, image, boxes, classes, scores, figsize=(7, 7), linewidth=1, color=[0, 0, 1]
 ):
     """Visualize Detections"""
     image = np.array(image, dtype=np.uint8)
@@ -86,7 +86,7 @@ def visualize_detections(
     plt.imshow(image)
     ax = plt.gca()
     for box, _cls, score in zip(boxes, classes, scores):
-        text = "{}: {:.2f}".format(_cls, score)
+        text = f"{_cls}"#"{}: {:.2f}".format(_cls, score)
         x1, y1, x2, y2 = box
         w, h = x2 - x1, y2 - y1
         patch = plt.Rectangle(
@@ -101,7 +101,8 @@ def visualize_detections(
             clip_box=ax.clipbox,
             clip_on=True,
         )
-    plt.show()
+    #plt.show()
+    plt.savefig(f'./output/{filename}')
     return ax
 
 class AnchorBox:

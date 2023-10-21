@@ -149,7 +149,7 @@ if __name__ == '__main__':
             kept_bboxes = kept_bboxes.read(0)
             kept_scores = kept_scores.read(0)
 
-            if tf.argmax(kept_scores).numpy() % 2 == 1:
+            if tf.argmax(kept_scores).numpy() == 1:
                 continue            
 
             image_cropped = extract_rectangle_area(image_resized, kept_bboxes[:4], kept_bboxes[4:])
