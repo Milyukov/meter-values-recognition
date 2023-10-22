@@ -193,7 +193,7 @@ class DecodePredictions(tf.keras.layers.Layer):
         anchor_sizes = anchor_boxes[:, :, 2:4]
         boxes = box_predictions * self._box_variance
         ul = anchor_boxes[:, :, :2] - anchor_sizes / 2
-        ur = anchor_boxes[:, :, :2] + np.array([1.0, -1.0]) * anchor_sizes / 2 # tf.constant([1.0, -1.0])
+        ur = anchor_boxes[:, :, :2] + np.array([1.0, -1.0]) * anchor_sizes / 2
         br = anchor_boxes[:, :, :2] + anchor_sizes / 2
         bl = anchor_boxes[:, :, :2] + np.array([-1.0, 1.0]) * anchor_sizes / 2
         boxes = tf.concat(

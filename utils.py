@@ -165,11 +165,7 @@ def extract_rectangle_area(im_resized, bbox, keypoints):
                                             bbox[0] + left:bbox[0] + left + bbox[2]], h, (width, height))
     return im_dst
 
-def parse_analog_detection(detections):
-    num_detections = detections.valid_detections[0]
-    class_names= [f'{int(x)}' for x in detections.nmsed_classes[0][:num_detections]]
-    boxes = detections.nmsed_boxes[0][:num_detections]
-    scores = detections.nmsed_scores[0][:num_detections]
+def parse_analog_detection(boxes, scores, class_names):
     kept_indices = []
     kept_boxes = []
     kept_scores = []
