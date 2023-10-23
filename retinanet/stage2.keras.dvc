@@ -1,0 +1,5 @@
+outs:
+- md5: be67959438157d9e094db3d1284470b9
+  size: 441189163
+  hash: md5
+  path: stage2.keras
