@@ -1,7 +1,8 @@
+import os
 import numpy as np
 import tensorflow as ttf
 from tensorflow import keras
-from keras.regularizers import l2
+from tensorflow.keras.regularizers import l2
 
 from model.utils_stage1 import *
 

@@ -1,13 +1,9 @@
 # Fetch the Keras session and save the model
 # The signature definition is defined by the input and output tensors,
 # and stored with the default serving key
-import tempfile
 import tensorflow as tf
 import os
 import sys
-
-import numpy as np
-import cv2
 
 # Get the parent directory
 parent_dir = os.path.dirname(os.path.realpath(__file__)) + '/../'
@@ -105,7 +101,7 @@ def export_model_stage2(model_stage_2, labels_stage2):
 if __name__ == '__main__':
     checkpoint_path_stage1 = './retinanet/stage1_reg.keras'
     model_stage_1 = tf.keras.saving.load_model(checkpoint_path_stage1)
-    model_dir = tempfile.gettempdir() + '/models/stage1/'
+    model_dir = './models/stage1/'
     model_sig_version = 1
     model_sig_export_path = os.path.join(model_dir, str(model_sig_version))
     labels = ['Analog', 'Digital', 'Analog_elligible', 'Digital_elligible']
@@ -118,7 +114,7 @@ if __name__ == '__main__':
 
     checkpoint_path_stage2 = 'retinanet/stage2.keras'
     model_stage_2 = tf.keras.saving.load_model(checkpoint_path_stage2)
-    model_dir = tempfile.gettempdir() + '/models/stage2/'
+    model_dir = './models/stage2/'
     model_sig_version = 1
     model_sig_export_path = os.path.join(model_dir, str(model_sig_version))
     labels = [f'{i}' for i in range(17)]

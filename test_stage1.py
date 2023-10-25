@@ -5,43 +5,12 @@ import tensorflow_datasets as tfds
 
 from model.data_processing_stage1 import LabelEncoder, preprocess_test_data, resize_and_pad_image
 from model.model_stage1 import *
-from tensorflow import keras
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model", help="absolute path to model files", type=str)
 parser.add_argument("--dataset", help="path to dataset", type=str)
 parser.add_argument("--binary", help="calc binary classification metrics", 
                     action="store_true")
-
-class ClassSpecificTruePositives(tf.keras.metrics.Metric):
-
-  def __init__(self, name='class_specific_true_positives', number_of_classes=4, **kwargs):
-    super(ClassSpecificTruePositives, self).__init__(name=name, **kwargs)
-    self.number_of_classes = number_of_classes
-    self.true_positives = {}
-    for class_id in self.number_of_classes:
-        self.true_positives[class_id] = self.add_weight(name='tp', initializer='zeros')
-
-  def update_state(self, y_true, y_pred, sample_weight=None):
-    y_pred = tf.cast(y_pred, dtype=tf.float32)
-    box_labels = y_true[:, :, :12]
-    box_predictions = y_pred[:, :, :12]
-    cls_predictions = tf.argmax(y_pred[:, :, 12:], axis=-1)
-
-
-    y_true = tf.cast(y_true, tf.bool)
-    y_pred = tf.cast(y_pred, tf.bool)
-
-    values = tf.logical_and(tf.equal(y_true, True), tf.equal(y_pred, True))
-    values = tf.cast(values, self.dtype)
-    if sample_weight is not None:
-      sample_weight = tf.cast(sample_weight, self.dtype)
-      sample_weight = tf.broadcast_to(sample_weight, values.shape)
-      values = tf.multiply(values, sample_weight)
-    self.true_positives.assign_add(tf.reduce_sum(values))
-
-  def result(self):
-    return self.true_positives
 
 def get_iou(ground_truth, pred):
     # coordinates of the area of intersection.

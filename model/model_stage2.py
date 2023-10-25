@@ -4,7 +4,7 @@ from tensorflow import keras
 
 from model.utils_stage2 import *
 
-from keras.regularizers import l2
+from tensorflow.keras.regularizers import l2
 
 def get_backbone():
     """Builds ResNet50 with pre-trained imagenet weights"""
