@@ -32,7 +32,8 @@ class MeterValuesRecognition:
         response = {
             "success": False,
             "text": "",
-            "counter_class": ""
+            "counter_class": "",
+            "counter_score": 0.0
         }
         tensor_image = tf.convert_to_tensor(image, dtype=tf.float32)
         predictions = self.predict_stage1(tensor_image)
@@ -41,8 +42,10 @@ class MeterValuesRecognition:
         image_resized = np.array(predictions['resized_image'])[0]
 
         detected_class = tf.argmax(kept_scores).numpy()
+        detected_score = kept_scores[detected_class]
         response["counter_class"] = self.int2label_stage1[detected_class]
-        if detected_class != 0:
+        response["counter_score"] = str(detected_score)
+        if detected_class % 2 == 1 or (detected_class == 0 and detected_score <= 0.5) or (detected_class == 2 and detected_score >= 0.5):
             return response            
 
         image_cropped = extract_rectangle_area(image_resized, kept_bboxes[:4], kept_bboxes[4:])
@@ -62,6 +65,8 @@ class MeterValuesRecognition:
         return response
 
 if __name__ == '__main__':
+    os.system('nvidia-smi')
+
     app = Flask(__name__)
 
     ocr = MeterValuesRecognition()

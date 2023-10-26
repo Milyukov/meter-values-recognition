@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.0.3-base-ubuntu20.04
+FROM nvidia/cuda:11.8.0-base-ubuntu20.04
 
 # Install additional packages
 RUN apt -y update

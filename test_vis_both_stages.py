@@ -15,7 +15,7 @@ sys.path.append(parent_dir)
 parser = argparse.ArgumentParser()
 parser.add_argument("images", help="path to images", type=str)
 
-ENDPOINT_URL = "http://172.17.0.2:8080/recognize"
+ENDPOINT_URL = "http://localhost:8080/recognize"
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -37,8 +37,10 @@ if __name__ == '__main__':
         et = time.time()
         print(f'Inference time = {et - st}')
         
-        # fname = text.replace('.', ',')
-        # fname += '.jpg'
+        fname = text.replace('.', ',')
+        fname += '.jpg'
+        if response['success']:
+            cv2.imwrite(os.path.join(args.images, 'results', fname), image)
         # ax = utils_stage2.visualize_detections(
         #     fname,
         #     image_cropped,
