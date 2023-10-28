@@ -56,10 +56,11 @@ class MeterValuesRecognition:
             response["time"] = str(et - st)
             return response            
         try:
-            image_cropped = extract_rectangle_area(image_resized, kept_bboxes[:4], kept_bboxes[4:])
+            image_cropped, roi = extract_rectangle_area(image_resized, kept_bboxes[:4], kept_bboxes[4:])
         except:
             response["error"] = "error in warping after 1st stage"
             return response
+        response['roi'] = roi.tolist()
         tensor_image = tf.convert_to_tensor(image_cropped, dtype=tf.float32)
         predictions = self.predict_stage2(tensor_image)
         kept_bboxes = np.array(predictions['bboxes_stage2'])[0]
@@ -69,7 +70,7 @@ class MeterValuesRecognition:
 
         class_names= [f'{int(x)}' for x in labels]
 
-        text, boxes, scores, class_names = parse_analog_detection(kept_bboxes, kept_scores, class_names)
+        text, boxes, scores, class_names = parse_analog_detection(kept_bboxes, kept_scores, class_names, roi)
         if not 'x' in text:
             response["success"] = True
         response["text"] = text
@@ -95,7 +96,7 @@ if __name__ == '__main__':
     def infer():
         data = request.json
         image = data['image']
-        return ocr.infer(image)
+        return ocr.infer(image, True)
     
     @app.errorhandler(Exception)
     def handle_exception(e):

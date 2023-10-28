@@ -131,6 +131,15 @@ def extract_rectangle_area(im_resized, bbox, keypoints):
         [height//2, -2 * height//3], 
         [height//2, 2 * height//3], 
         [-height//2, 2 * height//3]])
+    
+    # generate ROI inside cropped region
+    roi = np.array([
+        [height//2, height//2],
+        [width + height//2, height//2],
+        [width + height//2, height + height//2],
+        [height//2, height + height//2],
+    ])
+
     # use inverse homography to choose new points on the original image
     keypoints_planar_extended = keypoints_planar_extended.reshape(-1,1,2).astype(np.float32)
     keypoints_extended = cv2.perspectiveTransform(keypoints_planar_extended, h_inv)
@@ -163,9 +172,9 @@ def extract_rectangle_area(im_resized, bbox, keypoints):
 
     im_dst = cv2.warpPerspective(im_resized[bbox[1] + top:bbox[1] + top + bbox[3], 
                                             bbox[0] + left:bbox[0] + left + bbox[2]], h, (width, height))
-    return im_dst
+    return im_dst, roi
 
-def parse_analog_detection(boxes, scores, class_names):
+def parse_analog_detection(boxes, scores, class_names, roi=None):
     kept_indices = []
     kept_boxes = []
     kept_scores = []
@@ -179,6 +188,19 @@ def parse_analog_detection(boxes, scores, class_names):
                             [x12, y11], 
                             [x12, y12],
                             [x11, y12]])
+        
+        if roi is not None:
+            ul, ur, br, bl = roi
+            xr1, yr1 = ul
+            xr2, yr2 = br
+            polygon_roi = Polygon([[xr1, yr1], 
+                            [xr2, yr1], 
+                            [xr2, yr2],
+                            [xr1, yr2]])
+            intersection = polygon1.intersection(polygon_roi).area
+            if intersection == 0:
+                continue
+
         for box_index2, (box2, _cls2, score2) in enumerate(zip(boxes, class_names, scores)):
             if box_index1 == box_index2:
                 continue
