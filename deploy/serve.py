@@ -7,6 +7,8 @@ import numpy as np
 
 from utils import extract_rectangle_area, parse_analog_detection
 
+import time
+
 HOST = '0.0.0.0'
 PORT_NUMBER = 8080
 
@@ -28,12 +30,16 @@ class MeterValuesRecognition:
             3: "digital_illegible"
         }
 
-    def infer(self, image):
+    def infer(self, image, vis=False):
+        st = time.time()
+        image = np.array(image, dtype=np.uint8)
         response = {
+            "original_image_shape": image.shape,
             "success": False,
             "text": "",
             "counter_class": "",
-            "counter_score": 0.0
+            "counter_score": 0.0,
+            "time": 0.0
         }
         tensor_image = tf.convert_to_tensor(image, dtype=tf.float32)
         predictions = self.predict_stage1(tensor_image)
@@ -46,15 +52,20 @@ class MeterValuesRecognition:
         response["counter_class"] = self.int2label_stage1[detected_class]
         response["counter_score"] = str(detected_score)
         if detected_class % 2 == 1 or (detected_class == 0 and detected_score <= 0.5) or (detected_class == 2 and detected_score >= 0.5):
+            et = time.time()
+            response["time"] = str(et - st)
             return response            
-
-        image_cropped = extract_rectangle_area(image_resized, kept_bboxes[:4], kept_bboxes[4:])
+        try:
+            image_cropped = extract_rectangle_area(image_resized, kept_bboxes[:4], kept_bboxes[4:])
+        except:
+            response["error"] = "error in warping after 1st stage"
+            return response
         tensor_image = tf.convert_to_tensor(image_cropped, dtype=tf.float32)
         predictions = self.predict_stage2(tensor_image)
         kept_bboxes = np.array(predictions['bboxes_stage2'])[0]
         kept_scores = np.array(predictions['scores_stage2'])[0]
         labels = np.array(predictions['labels'])[0]
-        ratio = predictions['ratio'][0]
+        ratio = np.array(predictions['ratio'])[0]
 
         class_names= [f'{int(x)}' for x in labels]
 
@@ -62,13 +73,22 @@ class MeterValuesRecognition:
         if not 'x' in text:
             response["success"] = True
         response["text"] = text
+        et = time.time()
+        response["time"] = str(et - st)
+
+        # for visualization
+        if vis:
+            response["bboxes"] = boxes.tolist()
+            response["scores"] = scores.tolist()
+            response["class_names"] = class_names.tolist()
+            response["ratio"] = ratio.tolist()
+            response["image_cropped"] = image_cropped.tolist()
         return response
 
 if __name__ == '__main__':
     os.system('nvidia-smi')
 
     app = Flask(__name__)
-
     ocr = MeterValuesRecognition()
 
     @app.route('/recognize', methods=["POST"])

@@ -102,7 +102,7 @@ def visualize_detections(
             clip_on=True,
         )
     #plt.show()
-    plt.savefig(f'./output/{filename}')
+    plt.savefig(filename)
     return ax
 
 class AnchorBox:
