@@ -99,7 +99,7 @@ def export_model_stage2(model_stage_2, labels_stage2):
     return serving_fn
 
 if __name__ == '__main__':
-    checkpoint_path_stage1 = './retinanet/stage1_reg.keras'
+    checkpoint_path_stage1 = './retinanet/stage1.keras'
     model_stage_1 = tf.keras.saving.load_model(checkpoint_path_stage1)
     model_dir = './models/stage1/'
     model_sig_version = 1

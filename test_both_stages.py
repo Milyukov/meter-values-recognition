@@ -23,7 +23,7 @@ parser.add_argument("labels_stage1", help="path to labels.json (1st stage)", typ
 parser.add_argument("labels_stage2", help="path to labels.json (2nd stage)", type=str)
 parser.add_argument("dataset", help="path to tesnsorflow dataset", type=str)
 
-ENDPOINT_URL = "http://localhost:8000/recognize"
+ENDPOINT_URL = "http://localhost:8080/recognize"
 
 def extract_info_stage1(labels):
     images_info = []
@@ -94,7 +94,7 @@ if __name__ == '__main__':
     test_filenames = []
     for example in test_dataset:
         filename = example['image/filename'].numpy()
-        filename = str(filename).lstrip("b'").rstrip()
+        filename = str(filename).lstrip("b'").rstrip("'")
         test_filenames.append(filename)
     # get path to images for 1st stage
     path_to_images = args.images
@@ -117,8 +117,6 @@ if __name__ == '__main__':
     number_of_images = 0.0
     number_of_recognized = 0.0
     for filename in tqdm.tqdm(filenames):
-        if not filename.lower().endswith(('.jpg', '*.png', '*.bmp')):
-            continue
         if not filename in filenames_dict_stage1:
             continue
         if filenames_dict_stage1[filename]['class_name'].lower() != 'analog':
@@ -140,6 +138,8 @@ if __name__ == '__main__':
         response = requests.post(ENDPOINT_URL, json=data, headers=headers)
         response.raise_for_status()
         response = response.json()
+        if not 'text' in response:
+            print(response)
         pred_text = response["text"]
         et = time.time()
         timings.append(et - st)
@@ -168,3 +168,5 @@ if __name__ == '__main__':
     else:
         print(f'Recognition rate: {number_of_recognized / number_of_images}')
         print(f'Total number of relevant images: {int(number_of_images)}')
+        timings = np.array(timings)
+        print(f'Percentiles:\n 50% {np.median(timings)}\n90% {np.percentile(timings, 0.9)}\n99%{np.percentile(timings, 0.99)}')
