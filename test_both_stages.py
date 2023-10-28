@@ -116,6 +116,7 @@ if __name__ == '__main__':
     timings = []
     number_of_images = 0.0
     number_of_recognized = 0.0
+    number_of_recognized_before_fp = 0.0
     for filename in tqdm.tqdm(filenames):
         if not filename in filenames_dict_stage1:
             continue
@@ -160,6 +161,14 @@ if __name__ == '__main__':
             if pred_text == gt_text:
                 number_of_recognized += 1
             else:
+                if ',' in gt_text:
+                    gt_integer = gt_text.split(',')[0]
+                    if ',' in pred_text:
+                        pred_integer = pred_text.split(',')[0]
+                    else:
+                        pred_integer = pred_text
+                    if pred_integer == gt_integer:
+                        number_of_recognized_before_fp += 1
                 cv2.imwrite(f'./failures/{pred_text}_{filename}', image)
         else:
             cv2.imwrite(f'./failures/{response["counter_class"]}_{filename}', image)
@@ -167,6 +176,7 @@ if __name__ == '__main__':
         print('No test files!')
     else:
         print(f'Recognition rate: {number_of_recognized / number_of_images}')
+        print(f'Integer recognition rate: {number_of_recognized_before_fp / number_of_images}')
         print(f'Total number of relevant images: {int(number_of_images)}')
         timings = np.array(timings)
         print(f'Percentiles:\n 50% {np.median(timings)}\n90% {np.percentile(timings, 90)}\n99%{np.percentile(timings, 99)}')
