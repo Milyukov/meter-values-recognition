@@ -129,7 +129,7 @@ if __name__ == '__main__':
         number_of_images += 1
         st = time.time()
         image = cv2.imread(os.path.join(path_to_images, filename))
-        ratio = 400.0 / max(image.shape[:2])
+        ratio = 500.0 / max(image.shape[:2])
         image = cv2.resize(image, (0, 0), fx = ratio, fy = ratio, interpolation=cv2.INTER_CUBIC)
         data = { 'image': image.tolist() }
         headers = {
@@ -169,4 +169,4 @@ if __name__ == '__main__':
         print(f'Recognition rate: {number_of_recognized / number_of_images}')
         print(f'Total number of relevant images: {int(number_of_images)}')
         timings = np.array(timings)
-        print(f'Percentiles:\n 50% {np.median(timings)}\n90% {np.percentile(timings, 0.9)}\n99%{np.percentile(timings, 0.99)}')
+        print(f'Percentiles:\n 50% {np.median(timings)}\n90% {np.percentile(timings, 90)}\n99%{np.percentile(timings, 99)}')
