@@ -42,13 +42,15 @@ if __name__ == '__main__':
         print(f'Total time = {et - st}')
         
         fname = text.replace('.', ',')
-        fname += '.jpg'
+        fname = fname + '_' + filename
         if response['success']:
             boxes = np.array(response["bboxes"])
             scores = np.array(response["scores"])
             class_names = np.array(response["class_names"])
             ratio = response["ratio"]
             image_cropped = np.array(response["image_cropped"])
+            roi = np.array(response['roi'])
+            image_cropped = cv2.rectangle(image_cropped, roi[0], roi[2], (0, 255, 0), 2)
             ax = visualize_detections(
                 os.path.join(args.images, 'results', fname),
                 image_cropped,

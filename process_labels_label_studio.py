@@ -4,7 +4,7 @@ from copy import deepcopy
 import json
 import os
 import matplotlib.pyplot as plt
-from utils import *
+from deploy.utils import *
 import yaml
 
 def get_images_info(input_path):
@@ -98,7 +98,7 @@ def process_stage1(config):
     images_info = get_images_info(input_path)
     for im_resized, labels, bbox, keypoints, image_filename in generate_examples_stage1(images_info, images_path, width, height):
         # generate image for stage 2
-        im_dst_eq = extract_rectangle_area(im_resized, bbox, keypoints)
+        im_dst_eq, _ = extract_rectangle_area(im_resized, bbox, keypoints)
         # save generated image
         index += 1
         cv2.imwrite(os.path.join(config['stage1']['path_to_output'], f'cropped_{image_filename}'), im_dst_eq)
