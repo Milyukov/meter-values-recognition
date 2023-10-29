@@ -17,7 +17,7 @@ sys.path.append(parent_dir)
 parser = argparse.ArgumentParser()
 parser.add_argument("images", help="path to images", type=str)
 
-ENDPOINT_URL = "http://localhost:8000/recognize"
+ENDPOINT_URL = "http://localhost:8080/recognize"
 
 if __name__ == '__main__':
     args = parser.parse_args()

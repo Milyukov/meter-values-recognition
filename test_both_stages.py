@@ -18,10 +18,10 @@ parent_dir = os.path.dirname(os.path.realpath(__file__)) + '/model/'
 sys.path.append(parent_dir)
 
 parser = argparse.ArgumentParser()
-parser.add_argument("images", help="path to images (1st stage)", type=str)
-parser.add_argument("labels_stage1", help="path to labels.json (1st stage)", type=str)
-parser.add_argument("labels_stage2", help="path to labels.json (2nd stage)", type=str)
-parser.add_argument("dataset", help="path to tesnsorflow dataset", type=str)
+parser.add_argument("--images", help="path to images (1st stage)", type=str)
+parser.add_argument("--labels_stage1", help="path to labels.json (1st stage)", type=str)
+parser.add_argument("--labels_stage2", help="path to labels.json (2nd stage)", type=str)
+parser.add_argument("--dataset", help="path to tesnsorflow dataset", type=str)
 
 ENDPOINT_URL = "http://localhost:8080/recognize"
 

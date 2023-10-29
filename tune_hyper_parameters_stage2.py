@@ -4,6 +4,7 @@ from model.data_processing_stage2 import LabelEncoder, preprocess_data
 from model.model_stage2 import *
 
 import datetime
+import argparse
 import multiprocessing
 from tensorboard.plugins.hparams import api as hp
 
@@ -13,7 +14,7 @@ METRIC_LOSS = 'loss'
 METRIC_EPOCH_LOSS = 'epoch_loss'
 
 # tune HP
-def run(queue, run_dir, hparams):
+def run(queue, run_dir, hparams, dataset_path):
     config = tf.compat.v1.ConfigProto()
     config.gpu_options.allow_growth = True
     config.gpu_options.per_process_gpu_memory_fraction = 0.8 # change this value as needed
@@ -22,10 +23,9 @@ def run(queue, run_dir, hparams):
     label_encoder = LabelEncoder()
     batch_size = 16
     autotune = tf.data.AUTOTUNE
-    (train_dataset, val_dataset, test_dataset), dataset_info = tfds.load(
-        "meter_values_dataset_stage2", split=["train", "validation", "test"], with_info=True, 
-        data_dir="/mnt/images/counters-datasets/meter_values_dataset_stage2",
-        read_config=tfds.ReadConfig(try_autocache=False)
+    (train_dataset, val_dataset), dataset_info = tfds.load(
+        "meter_values_dataset_stage2", split=["train", "validation"], with_info=True, 
+        data_dir=dataset_path, read_config=tfds.ReadConfig(try_autocache=False)
     )
     train_dataset = train_dataset.map(preprocess_data, num_parallel_calls=autotune)
     train_dataset = train_dataset.shuffle(batch_size)
@@ -46,14 +46,6 @@ def run(queue, run_dir, hparams):
     val_dataset = val_dataset.apply(tf.data.experimental.ignore_errors())
     val_dataset = val_dataset.prefetch(autotune)
 
-    test_dataset = test_dataset.map(preprocess_data, num_parallel_calls=autotune)
-    test_dataset = test_dataset.padded_batch(
-        batch_size=1, padding_values=(0.0, 1e-8, -1), drop_remainder=True
-    )
-    test_dataset = test_dataset.map(label_encoder.encode_batch, num_parallel_calls=autotune)
-    test_dataset = test_dataset.apply(tf.data.experimental.ignore_errors())
-    test_dataset = test_dataset.prefetch(autotune)
-
     with tf.summary.create_file_writer(run_dir).as_default():
         hp.hparams(hparams)  # record the values used in this trial
         num_classes = 17
@@ -70,14 +62,17 @@ def run(queue, run_dir, hparams):
         epochs = 5
         model.fit(
             train_dataset,
-            validation_data=val_dataset,
             epochs=epochs,
             callbacks=[tensorboard_callback, terminate_on_nan],
             verbose=1,
         )
-        loss = model.evaluate(test_dataset)
+        loss = model.evaluate(val_dataset)
         queue.put(loss)
         tf.summary.scalar(METRIC_LOSS, loss, step=1)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--dataset_path", help="path to dataset", type=str, 
+                    default='/mnt/images/counters-datasets/meter_values_dataset_stage2')
 
 if __name__ == '__main__':
     multiprocessing.set_start_method('spawn')
@@ -93,7 +88,7 @@ if __name__ == '__main__':
         hp.Discrete([0.1 ** i for i in range(2, 6)])
         )
     
-    with tf.summary.create_file_writer('logs/hparam_tuning').as_default():
+    with tf.summary.create_file_writer('logs/stage2/hparam_tuning').as_default():
         hp.hparams_config(
             hparams=[HP_LR],
             metrics=[hp.Metric(METRIC_LOSS, display_name='Loss'),
@@ -116,7 +111,8 @@ if __name__ == '__main__':
         print('--- Starting trial: %s' % run_name)
 
         queue = multiprocessing.Queue()
-        p1 = multiprocessing.Process(target=run, args=(queue, log_dir + '/' + run_name, hparams))
+        p1 = multiprocessing.Process(
+            target=run, args=(queue, log_dir + '/' + run_name, hparams, parser.dataset_path))
         p1.start()
         p1.join()
         results = queue.get()
