@@ -1,0 +1,14 @@
+stage1:
+  path_to_ls_output: ./config/label_studio_output_example_stage_1.json
+  path_to_images: /mnt/c/Users/cvres/Datasets/Meter_stage1
+  height: 1028
+  width: 1028
+  path_to_output: ./output_stage1
+  visualize: False
+stage2:
+  path_to_ls_output: ./config/label_studio_output_example_stage_2.json
+  path_to_images: /mnt/c/Users/cvres/Datasets/Meter_stage2
+  height: 256
+  width: 256
+  path_to_output: ./output_stage2
+  visualize: True

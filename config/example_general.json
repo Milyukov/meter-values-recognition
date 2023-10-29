@@ -1,0 +1,22 @@
+[
+  {
+    "input_values": {
+      "image": "https://i.ibb.co/y0Mc5Wn/3203888.jpg"
+    }
+  },
+  {
+    "input_values": {
+      "image": "https://i.ibb.co/bFbTWGr/3201821.jpg"
+    }
+  },
+  {
+    "input_values": {
+      "image": "https://i.ibb.co/1vMJK14/3202399.jpg"
+    }
+  },
+  {
+    "input_values": {
+      "image": "https://invalid_url.jpg"
+    }
+  }
+]

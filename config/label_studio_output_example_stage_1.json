@@ -1,0 +1,789 @@
+[
+    {
+        "id": 1,
+        "annotations": [
+            {
+                "id": 1,
+                "completed_by": 1,
+                "result": [
+                    {
+                        "original_width": 3072,
+                        "original_height": 2048,
+                        "image_rotation": 0,
+                        "value": {
+                            "points": [
+                                [
+                                    53.11309577941123,
+                                    28.23980000123192
+                                ],
+                                [
+                                    69.58995503773768,
+                                    28.956185186376544
+                                ],
+                                [
+                                    69.47055750688025,
+                                    32.896303704672
+                                ],
+                                [
+                                    53.07329660245874,
+                                    32.17991851952738
+                                ]
+                            ],
+                            "closed": true,
+                            "polygonlabels": [
+                                "Analog"
+                            ]
+                        },
+                        "id": "xmGVX5tmo3",
+                        "from_name": "label",
+                        "to_name": "image",
+                        "type": "polygonlabels",
+                        "origin": "manual"
+                    }
+                ],
+                "was_cancelled": false,
+                "ground_truth": false,
+                "created_at": "2023-09-04T16:57:18.321772Z",
+                "updated_at": "2023-09-05T16:10:51.721476Z",
+                "draft_created_at": "2023-09-04T16:57:10.490507Z",
+                "lead_time": 176.79100000000003,
+                "prediction": {},
+                "result_count": 0,
+                "unique_id": "ff24a56f-dda4-4b36-9552-aaf1d22df26f",
+                "last_action": null,
+                "task": 1,
+                "project": 1,
+                "updated_by": 1,
+                "parent_prediction": null,
+                "parent_annotation": null,
+                "last_created_by": null
+            }
+        ],
+        "file_upload": "25ad14d4-3200831.jpg",
+        "drafts": [
+            {
+                "id": 28,
+                "user": "cvresearch.milyukov@gmail.com",
+                "created_username": "cvresearch.milyukov@gmail.com, 1",
+                "created_ago": "4 days, 14 hours",
+                "result": [
+                    {
+                        "original_width": 3072,
+                        "original_height": 2048,
+                        "image_rotation": 0,
+                        "value": {
+                            "points": [
+                                [
+                                    53.11309577941123,
+                                    28.23980000123192
+                                ],
+                                [
+                                    69.58995503773768,
+                                    28.956185186376544
+                                ],
+                                [
+                                    69.47055750688025,
+                                    32.896303704672
+                                ],
+                                [
+                                    53.07329660245874,
+                                    32.17991851952738
+                                ]
+                            ],
+                            "closed": true,
+                            "polygonlabels": [
+                                "Analog"
+                            ]
+                        },
+                        "id": "xmGVX5tmo3",
+                        "from_name": "label",
+                        "to_name": "image",
+                        "type": "polygonlabels",
+                        "origin": "manual"
+                    }
+                ],
+                "lead_time": 208.18400000000003,
+                "was_postponed": false,
+                "created_at": "2023-09-05T18:12:40.692534Z",
+                "updated_at": "2023-09-05T18:13:00.883146Z",
+                "task": 1,
+                "annotation": 1
+            }
+        ],
+        "predictions": [],
+        "data": {
+            "image": "\/data\/upload\/1\/25ad14d4-3200831.jpg"
+        },
+        "meta": {},
+        "created_at": "2023-09-04T16:55:52.042343Z",
+        "updated_at": "2023-09-05T16:10:51.750547Z",
+        "inner_id": 1,
+        "total_annotations": 1,
+        "cancelled_annotations": 0,
+        "total_predictions": 0,
+        "comment_count": 0,
+        "unresolved_comment_count": 0,
+        "last_comment_updated_at": null,
+        "project": 1,
+        "updated_by": 1,
+        "comment_authors": []
+    },
+    {
+        "id": 4,
+        "annotations": [
+            {
+                "id": 2,
+                "completed_by": 1,
+                "result": [
+                    {
+                        "original_width": 3072,
+                        "original_height": 2048,
+                        "image_rotation": 0,
+                        "value": {
+                            "points": [
+                                [
+                                    29.30675037530795,
+                                    42.453745566399306
+                                ],
+                                [
+                                    65.34632730548692,
+                                    43.73344162183748
+                                ],
+                                [
+                                    65.30096148133275,
+                                    54.94998537447013
+                                ],
+                                [
+                                    29.159242582291117,
+                                    54.374010509548164
+                                ]
+                            ],
+                            "closed": true,
+                            "polygonlabels": [
+                                "Digital"
+                            ]
+                        },
+                        "id": "QQCnQzeVM7",
+                        "from_name": "label",
+                        "to_name": "image",
+                        "type": "polygonlabels",
+                        "origin": "manual"
+                    }
+                ],
+                "was_cancelled": false,
+                "ground_truth": false,
+                "created_at": "2023-09-04T16:58:11.523409Z",
+                "updated_at": "2023-09-05T18:11:22.124069Z",
+                "draft_created_at": "2023-09-04T16:57:37.566282Z",
+                "lead_time": 100.036,
+                "prediction": {},
+                "result_count": 0,
+                "unique_id": "c37c4908-fc76-4cd1-a233-6ab778415b34",
+                "last_action": null,
+                "task": 4,
+                "project": 1,
+                "updated_by": 1,
+                "parent_prediction": null,
+                "parent_annotation": null,
+                "last_created_by": null
+            }
+        ],
+        "file_upload": "bc6d95b1-3201820.jpg",
+        "drafts": [
+            {
+                "id": 27,
+                "user": "cvresearch.milyukov@gmail.com",
+                "created_username": "cvresearch.milyukov@gmail.com, 1",
+                "created_ago": "4 days, 14 hours",
+                "result": [
+                    {
+                        "original_width": 3072,
+                        "original_height": 2048,
+                        "image_rotation": 0,
+                        "value": {
+                            "points": [
+                                [
+                                    29.30675037530795,
+                                    42.453745566399306
+                                ],
+                                [
+                                    65.34632730548692,
+                                    43.73344162183748
+                                ],
+                                [
+                                    65.30096148133275,
+                                    54.94998537447013
+                                ],
+                                [
+                                    29.159242582291117,
+                                    54.374010509548164
+                                ]
+                            ],
+                            "closed": true,
+                            "polygonlabels": [
+                                "Digital"
+                            ]
+                        },
+                        "id": "QQCnQzeVM7",
+                        "from_name": "label",
+                        "to_name": "image",
+                        "type": "polygonlabels",
+                        "origin": "manual"
+                    }
+                ],
+                "lead_time": 165.537,
+                "was_postponed": false,
+                "created_at": "2023-09-05T18:12:03.315800Z",
+                "updated_at": "2023-09-05T18:12:28.033453Z",
+                "task": 4,
+                "annotation": 2
+            }
+        ],
+        "predictions": [],
+        "data": {
+            "image": "\/data\/upload\/1\/bc6d95b1-3201820.jpg"
+        },
+        "meta": {},
+        "created_at": "2023-09-04T16:55:52.042576Z",
+        "updated_at": "2023-09-05T18:11:22.189157Z",
+        "inner_id": 4,
+        "total_annotations": 1,
+        "cancelled_annotations": 0,
+        "total_predictions": 0,
+        "comment_count": 0,
+        "unresolved_comment_count": 0,
+        "last_comment_updated_at": null,
+        "project": 1,
+        "updated_by": 1,
+        "comment_authors": []
+    },
+    {
+        "id": 6,
+        "annotations": [
+            {
+                "id": 7,
+                "completed_by": 1,
+                "result": [
+                    {
+                        "original_width": 3072,
+                        "original_height": 2048,
+                        "image_rotation": 0,
+                        "value": {
+                            "points": [
+                                [
+                                    26.99434744055271,
+                                    44.000841212685316
+                                ],
+                                [
+                                    47.198241598676134,
+                                    44.000841212685316
+                                ],
+                                [
+                                    47.251214303199895,
+                                    49.16567990375094
+                                ],
+                                [
+                                    26.94137473602895,
+                                    49.37620715944591
+                                ]
+                            ],
+                            "closed": true,
+                            "polygonlabels": [
+                                "Analog"
+                            ]
+                        },
+                        "id": "xPcZrB2o4Z",
+                        "from_name": "label",
+                        "to_name": "image",
+                        "type": "polygonlabels",
+                        "origin": "manual"
+                    }
+                ],
+                "was_cancelled": false,
+                "ground_truth": false,
+                "created_at": "2023-09-05T15:19:02.977818Z",
+                "updated_at": "2023-09-05T16:11:00.283148Z",
+                "draft_created_at": "2023-09-05T15:17:57.373718Z",
+                "lead_time": 90.87700000000001,
+                "prediction": {},
+                "result_count": 0,
+                "unique_id": "53ce75e3-4e36-40c3-9787-5053acc987ad",
+                "last_action": null,
+                "task": 6,
+                "project": 1,
+                "updated_by": 1,
+                "parent_prediction": null,
+                "parent_annotation": null,
+                "last_created_by": null
+            }
+        ],
+        "file_upload": "14939cac-3201829.jpg",
+        "drafts": [],
+        "predictions": [],
+        "data": {
+            "image": "\/data\/upload\/1\/14939cac-3201829.jpg"
+        },
+        "meta": {},
+        "created_at": "2023-09-04T16:55:52.042668Z",
+        "updated_at": "2023-09-05T16:11:00.312009Z",
+        "inner_id": 6,
+        "total_annotations": 1,
+        "cancelled_annotations": 0,
+        "total_predictions": 0,
+        "comment_count": 0,
+        "unresolved_comment_count": 0,
+        "last_comment_updated_at": null,
+        "project": 1,
+        "updated_by": 1,
+        "comment_authors": []
+    },
+    {
+        "id": 10,
+        "annotations": [
+            {
+                "id": 3,
+                "completed_by": 1,
+                "result": [
+                    {
+                        "original_width": 2048,
+                        "original_height": 3072,
+                        "image_rotation": 0,
+                        "value": {
+                            "points": [
+                                [
+                                    4.117423851618753,
+                                    69.39523340630939
+                                ],
+                                [
+                                    57.21052088565004,
+                                    70.33429498650314
+                                ],
+                                [
+                                    57.10216762639691,
+                                    75.53525143065315
+                                ],
+                                [
+                                    3.3589510368468773,
+                                    74.52395434429064
+                                ]
+                            ],
+                            "closed": true,
+                            "polygonlabels": [
+                                "Analog_illegible"
+                            ]
+                        },
+                        "id": "pO_IY-Z5kk",
+                        "from_name": "label",
+                        "to_name": "image",
+                        "type": "polygonlabels",
+                        "origin": "manual"
+                    }
+                ],
+                "was_cancelled": false,
+                "ground_truth": false,
+                "created_at": "2023-09-04T16:58:58.387468Z",
+                "updated_at": "2023-09-05T18:10:05.008760Z",
+                "draft_created_at": "2023-09-04T16:58:52.696969Z",
+                "lead_time": 80.941,
+                "prediction": {},
+                "result_count": 0,
+                "unique_id": "2f2bbebb-0811-4df8-8927-45c2af211f78",
+                "last_action": null,
+                "task": 10,
+                "project": 1,
+                "updated_by": 1,
+                "parent_prediction": null,
+                "parent_annotation": null,
+                "last_created_by": null
+            }
+        ],
+        "file_upload": "2e3cd27a-3202399.jpg",
+        "drafts": [],
+        "predictions": [],
+        "data": {
+            "image": "\/data\/upload\/1\/2e3cd27a-3202399.jpg"
+        },
+        "meta": {},
+        "created_at": "2023-09-04T16:55:52.042848Z",
+        "updated_at": "2023-09-05T18:10:05.067770Z",
+        "inner_id": 10,
+        "total_annotations": 1,
+        "cancelled_annotations": 0,
+        "total_predictions": 0,
+        "comment_count": 0,
+        "unresolved_comment_count": 0,
+        "last_comment_updated_at": null,
+        "project": 1,
+        "updated_by": 1,
+        "comment_authors": []
+    },
+    {
+        "id": 24,
+        "annotations": [
+            {
+                "id": 8,
+                "completed_by": 1,
+                "result": [
+                    {
+                        "original_width": 2048,
+                        "original_height": 3072,
+                        "image_rotation": 0,
+                        "value": {
+                            "points": [
+                                [
+                                    29.484293860614514,
+                                    35.4395499630713
+                                ],
+                                [
+                                    59.23218867374522,
+                                    35.89923045687243
+                                ],
+                                [
+                                    59.03518274783045,
+                                    40.16769218502585
+                                ],
+                                [
+                                    29.484293860614514,
+                                    39.839348975167894
+                                ]
+                            ],
+                            "closed": true,
+                            "polygonlabels": [
+                                "Analog"
+                            ]
+                        },
+                        "id": "BDYiQkf3am",
+                        "from_name": "label",
+                        "to_name": "image",
+                        "type": "polygonlabels",
+                        "origin": "manual"
+                    }
+                ],
+                "was_cancelled": false,
+                "ground_truth": false,
+                "created_at": "2023-09-05T15:22:02.397760Z",
+                "updated_at": "2023-09-05T16:11:10.226854Z",
+                "draft_created_at": "2023-09-05T15:21:08.649690Z",
+                "lead_time": 78.253,
+                "prediction": {},
+                "result_count": 0,
+                "unique_id": "f99283e9-dd4d-4c30-9b7d-64c77d547002",
+                "last_action": null,
+                "task": 24,
+                "project": 1,
+                "updated_by": 1,
+                "parent_prediction": null,
+                "parent_annotation": null,
+                "last_created_by": null
+            }
+        ],
+        "file_upload": "375baabe-3297821.jpg",
+        "drafts": [
+            {
+                "id": 29,
+                "user": "cvresearch.milyukov@gmail.com",
+                "created_username": "cvresearch.milyukov@gmail.com, 1",
+                "created_ago": "4 days, 14 hours",
+                "result": [
+                    {
+                        "original_width": 2048,
+                        "original_height": 3072,
+                        "image_rotation": 0,
+                        "value": {
+                            "points": [
+                                [
+                                    29.484293860614514,
+                                    35.4395499630713
+                                ],
+                                [
+                                    59.23218867374522,
+                                    35.89923045687243
+                                ],
+                                [
+                                    59.03518274783045,
+                                    40.16769218502585
+                                ],
+                                [
+                                    29.484293860614514,
+                                    39.839348975167894
+                                ]
+                            ],
+                            "closed": true,
+                            "polygonlabels": [
+                                "Analog"
+                            ]
+                        },
+                        "id": "BDYiQkf3am",
+                        "from_name": "label",
+                        "to_name": "image",
+                        "type": "polygonlabels",
+                        "origin": "manual"
+                    }
+                ],
+                "lead_time": 113.914,
+                "was_postponed": false,
+                "created_at": "2023-09-05T18:13:21.670531Z",
+                "updated_at": "2023-09-05T18:13:43.875133Z",
+                "task": 24,
+                "annotation": 8
+            }
+        ],
+        "predictions": [],
+        "data": {
+            "image": "\/data\/upload\/1\/375baabe-3297821.jpg"
+        },
+        "meta": {},
+        "created_at": "2023-09-05T15:20:44.905888Z",
+        "updated_at": "2023-09-05T16:11:10.255914Z",
+        "inner_id": 21,
+        "total_annotations": 1,
+        "cancelled_annotations": 0,
+        "total_predictions": 0,
+        "comment_count": 0,
+        "unresolved_comment_count": 0,
+        "last_comment_updated_at": null,
+        "project": 1,
+        "updated_by": 1,
+        "comment_authors": []
+    },
+    {
+        "id": 25,
+        "annotations": [
+            {
+                "id": 9,
+                "completed_by": 1,
+                "result": [
+                    {
+                        "original_width": 2048,
+                        "original_height": 3072,
+                        "image_rotation": 0,
+                        "value": {
+                            "points": [
+                                [
+                                    21.8651866276982,
+                                    31.460096890838457
+                                ],
+                                [
+                                    47.74555532471524,
+                                    32.30255680936115
+                                ],
+                                [
+                                    47.74555532471524,
+                                    36.5148564019746
+                                ],
+                                [
+                                    22.117924603255005,
+                                    35.60499968997009
+                                ]
+                            ],
+                            "closed": true,
+                            "polygonlabels": [
+                                "Analog"
+                            ]
+                        },
+                        "id": "DnX2go-LZN",
+                        "from_name": "label",
+                        "to_name": "image",
+                        "type": "polygonlabels",
+                        "origin": "manual"
+                    }
+                ],
+                "was_cancelled": false,
+                "ground_truth": false,
+                "created_at": "2023-09-05T15:24:07.098026Z",
+                "updated_at": "2023-09-05T16:11:21.901294Z",
+                "draft_created_at": "2023-09-05T15:22:55.423090Z",
+                "lead_time": 91.796,
+                "prediction": {},
+                "result_count": 0,
+                "unique_id": "390f1d3c-569e-4568-8273-f5e8ee0c7aac",
+                "last_action": null,
+                "task": 25,
+                "project": 1,
+                "updated_by": 1,
+                "parent_prediction": null,
+                "parent_annotation": null,
+                "last_created_by": null
+            }
+        ],
+        "file_upload": "0069a093-3297814.jpg",
+        "drafts": [],
+        "predictions": [],
+        "data": {
+            "image": "\/data\/upload\/1\/0069a093-3297814.jpg"
+        },
+        "meta": {},
+        "created_at": "2023-09-05T15:22:35.112161Z",
+        "updated_at": "2023-09-05T16:11:21.930136Z",
+        "inner_id": 22,
+        "total_annotations": 1,
+        "cancelled_annotations": 0,
+        "total_predictions": 0,
+        "comment_count": 0,
+        "unresolved_comment_count": 0,
+        "last_comment_updated_at": null,
+        "project": 1,
+        "updated_by": 1,
+        "comment_authors": []
+    },
+    {
+        "id": 26,
+        "annotations": [
+            {
+                "id": 10,
+                "completed_by": 1,
+                "result": [
+                    {
+                        "original_width": 2048,
+                        "original_height": 3072,
+                        "image_rotation": 0,
+                        "value": {
+                            "points": [
+                                [
+                                    30.911607847084017,
+                                    40.334272013607105
+                                ],
+                                [
+                                    58.02498403165251,
+                                    41.76955412759584
+                                ],
+                                [
+                                    57.55403208799995,
+                                    45.44746454469198
+                                ],
+                                [
+                                    30.575213601617907,
+                                    43.653361902206065
+                                ]
+                            ],
+                            "closed": true,
+                            "polygonlabels": [
+                                "Analog"
+                            ]
+                        },
+                        "id": "_Dtw_2Q0me",
+                        "from_name": "label",
+                        "to_name": "image",
+                        "type": "polygonlabels",
+                        "origin": "manual"
+                    }
+                ],
+                "was_cancelled": false,
+                "ground_truth": false,
+                "created_at": "2023-09-05T16:10:11.430459Z",
+                "updated_at": "2023-09-05T16:10:11.430480Z",
+                "draft_created_at": "2023-09-05T15:25:13.673111Z",
+                "lead_time": 2711.208,
+                "prediction": {},
+                "result_count": 0,
+                "unique_id": "61ad51fc-b549-4159-8407-62fb3a93f53d",
+                "last_action": null,
+                "task": 26,
+                "project": 1,
+                "updated_by": 1,
+                "parent_prediction": null,
+                "parent_annotation": null,
+                "last_created_by": null
+            }
+        ],
+        "file_upload": "1caf683b-3297717.jpg",
+        "drafts": [],
+        "predictions": [],
+        "data": {
+            "image": "\/data\/upload\/1\/1caf683b-3297717.jpg"
+        },
+        "meta": {},
+        "created_at": "2023-09-05T15:24:57.517781Z",
+        "updated_at": "2023-09-05T16:10:11.460040Z",
+        "inner_id": 23,
+        "total_annotations": 1,
+        "cancelled_annotations": 0,
+        "total_predictions": 0,
+        "comment_count": 0,
+        "unresolved_comment_count": 0,
+        "last_comment_updated_at": null,
+        "project": 1,
+        "updated_by": 1,
+        "comment_authors": []
+    },
+    {
+        "id": 34,
+        "annotations": [
+            {
+                "id": 15,
+                "completed_by": 1,
+                "result": [
+                    {
+                        "original_width": 1387,
+                        "original_height": 2080,
+                        "image_rotation": 0,
+                        "value": {
+                            "points": [
+                                [
+                                    10.813764642288817,
+                                    39.95279956474164
+                                ],
+                                [
+                                    88.961237123896,
+                                    38.70290860150376
+                                ],
+                                [
+                                    89.97052182384296,
+                                    51.68254552743562
+                                ],
+                                [
+                                    10.669581113724966,
+                                    53.028581949384105
+                                ]
+                            ],
+                            "closed": true,
+                            "polygonlabels": [
+                                "Digital"
+                            ]
+                        },
+                        "id": "-qcXzgb5yE",
+                        "from_name": "label",
+                        "to_name": "image",
+                        "type": "polygonlabels",
+                        "origin": "manual"
+                    }
+                ],
+                "was_cancelled": false,
+                "ground_truth": false,
+                "created_at": "2023-09-05T17:43:21.215882Z",
+                "updated_at": "2023-09-10T08:39:54.423377Z",
+                "draft_created_at": "2023-09-05T17:43:07.356113Z",
+                "lead_time": 31.5,
+                "prediction": {},
+                "result_count": 0,
+                "unique_id": "2d017756-ec66-4f74-93e8-0ea2ab1096cb",
+                "last_action": null,
+                "task": 34,
+                "project": 1,
+                "updated_by": 1,
+                "parent_prediction": null,
+                "parent_annotation": null,
+                "last_created_by": null
+            }
+        ],
+        "file_upload": "fbb7022e-3216257.jpg",
+        "drafts": [],
+        "predictions": [],
+        "data": {
+            "image": "\/data\/upload\/1\/fbb7022e-3216257.jpg"
+        },
+        "meta": {},
+        "created_at": "2023-09-05T17:42:47.927749Z",
+        "updated_at": "2023-09-10T08:39:54.487665Z",
+        "inner_id": 24,
+        "total_annotations": 1,
+        "cancelled_annotations": 0,
+        "total_predictions": 0,
+        "comment_count": 0,
+        "unresolved_comment_count": 0,
+        "last_comment_updated_at": null,
+        "project": 1,
+        "updated_by": 1,
+        "comment_authors": []
+    }
+]
