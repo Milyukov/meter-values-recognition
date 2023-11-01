@@ -60,13 +60,14 @@ class MeterValuesRecognition:
         except:
             response["error"] = "error in warping after 1st stage"
             return response
-        response['roi'] = roi.tolist()
         tensor_image = tf.convert_to_tensor(image_cropped, dtype=tf.float32)
         predictions = self.predict_stage2(tensor_image)
         kept_bboxes = np.array(predictions['bboxes_stage2'])[0]
         kept_scores = np.array(predictions['scores_stage2'])[0]
         labels = np.array(predictions['labels'])[0]
         ratio = np.array(predictions['ratio'])[0]
+        response['roi'] = roi.tolist()
+        roi = roi.astype(np.float64) * ratio
 
         class_names= [f'{int(x)}' for x in labels]
 
