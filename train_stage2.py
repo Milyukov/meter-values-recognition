@@ -34,14 +34,16 @@ parser.add_argument("--resume_training", help="Boolean flag wheather to resume t
                     action="store_true")
 
 if __name__ == '__main__':
+    args = parser.parse_args()
+
     model_dir = "retinanet/"
     label_encoder = LabelEncoder()
 
     num_classes = 17
     batch_size = 16
 
-    learning_rates = [0.00001, 0.000005]#[2.5e-06, 0.000625, 0.00125, 0.0025, 0.00025, 2.5e-05]
-    learning_rate_boundaries = [250] #[125, 250,500, 240000, 360000] 
+    learning_rates = [0.0001, 0.00001, 0.000005]#[2.5e-06, 0.000625, 0.00125, 0.0025, 0.00025, 2.5e-05]
+    learning_rate_boundaries = [150, 250] #[125, 250,500, 240000, 360000] 
     learning_rate_fn = tf.optimizers.schedules.PiecewiseConstantDecay(
         boundaries=learning_rate_boundaries, values=learning_rates
     )
@@ -80,7 +82,7 @@ if __name__ == '__main__':
 
     (train_dataset, val_dataset), dataset_info = tfds.load(
         "meter_values_dataset_stage2", split=["train", "validation"], with_info=True,
-        read_config=tfds.ReadConfig(try_autocache=False), data_dir=parser.dataset_path
+        read_config=tfds.ReadConfig(try_autocache=False), data_dir=args.dataset_path
     )
 
     autotune = tf.data.AUTOTUNE
@@ -112,7 +114,7 @@ if __name__ == '__main__':
     train_steps = 4 * 100000
     epochs = train_steps // train_steps_per_epoch
 
-    if os.path.exists(checkpoint_path) and parser.resume_training:
+    if os.path.exists(checkpoint_path) and args.resume_training:
         model = tf.keras.saving.load_model(checkpoint_path)
 
     model.fit(
