@@ -61,14 +61,14 @@ python train_stage1.py --dataset_path /mnt/images/counters-datasets/meter_values
 
 Чтобы запустить обучение второй стадии, нужно выполнить в терминале в корне репозитория:
 ```cmd
-python train_stage2.py --dataset_path <path> --resume_training <flag>
+python train_stage2.py --dataset_path <path> [--resume_training]
 ```
-Аргумент dataset_path указывает на путь к папке с датасетом в формате tensorflow dataset, а аргумент resume_training может принимать значения True или False в зависимости от того, нужно ли использовать предыдущие веса и параметрны обучения для инициализации модели или нужно обучить модель с нуля.
+Аргумент dataset_path указывает на путь к папке с датасетом в формате tensorflow dataset, а аргумент resume_training задается, чтобы использовать предыдущие веса и параметрны обучения для инициализации модели, или опускается, если нужно обучить модель с нуля.
 
 Например:
 
 ```cmd
-python train_stage1.py --dataset_path /mnt/images/counters-datasets/meter_values_dataset_stage2 --resume_training True
+python train_stage1.py --dataset_path /mnt/images/counters-datasets/meter_values_dataset_stage2 --resume_training
 ```
 
 Состояние модели, включая веса и параметры оптимизатора, будет сохранено в файл retinanet/stage2.keras
