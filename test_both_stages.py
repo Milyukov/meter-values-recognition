@@ -162,9 +162,9 @@ if __name__ == '__main__':
                 number_of_recognized += 1
             else:
                 if '.' in gt_text:
-                    gt_integer = gt_text.split(',')[0]
+                    gt_integer = gt_text.split('.')[0]
                     if '.' in pred_text:
-                        pred_integer = pred_text.split(',')[0]
+                        pred_integer = pred_text.split('.')[0]
                     else:
                         pred_integer = pred_text
                     if pred_integer == gt_integer:
@@ -179,4 +179,4 @@ if __name__ == '__main__':
         print(f'Integer recognition rate: {number_of_recognized_before_fp / number_of_images}')
         print(f'Total number of relevant images: {int(number_of_images)}')
         timings = np.array(timings)
-        print(f'Percentiles:\n 50% {np.median(timings)}\n90% {np.percentile(timings, 90)}\n99%{np.percentile(timings, 99)}')
+        print(f'Percentiles:\n 50% {np.median(timings)}\n90% {np.percentile(timings, 90)}\n99% {np.percentile(timings, 99)}')
