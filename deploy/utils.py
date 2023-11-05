@@ -180,7 +180,24 @@ def parse_analog_detection(boxes, scores, class_names, roi=None):
     kept_scores = []
     kept_class_names = []
     digits_after_fpoint = []
+    # filter out areas after point except the largest one
+    area = 0
+    largest_index = -1
+    indecies_to_remove = []
+    for box_index, (box, _cls, score) in enumerate(zip(boxes, class_names, scores)):
+        if _cls == '14':
+            indecies_to_remove.append(box_index)
+            x1, y1, x2, y2 = box
+            w, h = x2 - x1, y2 - y1
+            if area < abs(w * h):
+                area = w * h
+                largest_index = box_index
+    if len(indecies_to_remove) > 0:
+        indecies_to_remove.remove(largest_index)
     for box_index1, (box1, _cls1, score1) in enumerate(zip(boxes, class_names, scores)):
+        if _cls1 == '14':
+            if box_index1 in indecies_to_remove:
+                continue
         duplicated = False
         x11, y11, x12, y12 = box1
         w1, h1 = x12 - x11, y12 - y11
@@ -214,6 +231,8 @@ def parse_analog_detection(boxes, scores, class_names, roi=None):
             union = polygon1.union(polygon2).area
             iou = intersection / union
             if _cls2 == '14':
+                if box_index2 in indecies_to_remove:
+                    continue
                 if intersection > 0.2 * polygon1.area:
                     digits_after_fpoint.append(box_index1)
             elif iou > 0.9:

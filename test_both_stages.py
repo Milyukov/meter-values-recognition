@@ -161,9 +161,9 @@ if __name__ == '__main__':
             if pred_text == gt_text:
                 number_of_recognized += 1
             else:
-                if ',' in gt_text:
+                if '.' in gt_text:
                     gt_integer = gt_text.split(',')[0]
-                    if ',' in pred_text:
+                    if '.' in pred_text:
                         pred_integer = pred_text.split(',')[0]
                     else:
                         pred_integer = pred_text
