@@ -145,19 +145,21 @@ if __name__ == '__main__':
         et = time.time()
         timings.append(et - st)
         
+        # get ground truth value
+        info = filenames_dict_stage2['cropped_' + filename]
+        bboxes = info['bboxes']
+
+        bboxes_coco19 = []
+        for box in bboxes:
+            x, y, w, h = box
+            bboxes_coco19.append([x, y, x + w, y + h])
+        bboxes_coco19 = np.array(bboxes_coco19)
+
+        class_names = info['class_names']
+        class_names = list(map(lambda x: x.replace('FLOATP', '14'), class_names))
+        gt_text, _, _, _ = parse_analog_detection(bboxes_coco19, np.ones((bboxes_coco19.shape[0],)), class_names)
+
         if response['success']:
-            info = filenames_dict_stage2['cropped_' + filename]
-            bboxes = info['bboxes']
-
-            bboxes_coco19 = []
-            for box in bboxes:
-                x, y, w, h = box
-                bboxes_coco19.append([x, y, x + w, y + h])
-            bboxes_coco19 = np.array(bboxes_coco19)
-
-            class_names = info['class_names']
-            class_names = list(map(lambda x: x.replace('FLOATP', '14'), class_names))
-            gt_text, _, _, _ = parse_analog_detection(bboxes_coco19, np.ones((bboxes_coco19.shape[0],)), class_names)
             if pred_text == gt_text:
                 number_of_recognized += 1
             else:
@@ -171,7 +173,7 @@ if __name__ == '__main__':
                         number_of_recognized_before_fp += 1
                 cv2.imwrite(f'./failures/{pred_text}_{filename}', image)
         else:
-            cv2.imwrite(f'./failures/{response["counter_class"]}_{filename}', image)
+            cv2.imwrite(f'./failures/gt_{response["counter_class"]}_{gt_text}_{filename}', image)
     if number_of_images == 0:
         print('No test files!')
     else:
