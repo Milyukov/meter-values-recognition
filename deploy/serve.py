@@ -49,9 +49,12 @@ class MeterValuesRecognition:
 
         detected_class = tf.argmax(kept_scores).numpy()
         detected_score = kept_scores[detected_class]
-        response["counter_class"] = self.int2label_stage1[detected_class]
+        if detected_score > 0.5:
+            response["counter_class"] = self.int2label_stage1[detected_class]
+        else:
+            response["counter_class"] = 'other'
         response["counter_score"] = str(detected_score)
-        if detected_class % 2 == 1 or (detected_class == 0 and detected_score <= 0.5) or (detected_class == 2 and detected_score >= 0.5):
+        if detected_class != 0:
             et = time.time()
             response["time"] = str(et - st)
             return response            
@@ -97,7 +100,7 @@ if __name__ == '__main__':
     def infer():
         data = request.json
         image = data['image']
-        return ocr.infer(image, True)
+        return ocr.infer(image, False)
     
     @app.errorhandler(Exception)
     def handle_exception(e):
