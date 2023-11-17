@@ -134,10 +134,10 @@ def extract_rectangle_area(im_resized, bbox, keypoints):
     
     # generate ROI inside cropped region
     roi = np.array([
-        [height//2, height//2],
-        [width + height//2, height//2],
-        [width + height//2, height + height//2],
-        [height//2, height + height//2],
+        [height//2, 2 * height//3],
+        [width + height//2, 2 * height//3],
+        [width + height//2, height + 2 * height//3],
+        [height//2, height + 2 * height//3],
     ])
 
     # use inverse homography to choose new points on the original image
@@ -194,6 +194,13 @@ def parse_analog_detection(boxes, scores, class_names, roi=None):
                 largest_index = box_index
     if len(indecies_to_remove) > 0:
         indecies_to_remove.remove(largest_index)
+    if roi is not None:
+        xr1, yr1 = roi[0, :]
+        xr2, yr2 = roi[2, :]
+        polygon_roi = Polygon([[xr1, yr1], 
+                        [xr2, yr1], 
+                        [xr2, yr2],
+                        [xr1, yr2]])
     for box_index1, (box1, _cls1, score1) in enumerate(zip(boxes, class_names, scores)):
         if _cls1 == '14':
             if box_index1 in indecies_to_remove:
@@ -207,15 +214,9 @@ def parse_analog_detection(boxes, scores, class_names, roi=None):
                             [x11, y12]])
         
         if roi is not None:
-            ul, ur, br, bl = roi
-            xr1, yr1 = ul
-            xr2, yr2 = br
-            polygon_roi = Polygon([[xr1, yr1], 
-                            [xr2, yr1], 
-                            [xr2, yr2],
-                            [xr1, yr2]])
             intersection = polygon1.intersection(polygon_roi).area
-            if intersection == 0:
+            iou = intersection / polygon1.area
+            if iou <= 0.05:
                 continue
 
         for box_index2, (box2, _cls2, score2) in enumerate(zip(boxes, class_names, scores)):
@@ -227,6 +228,12 @@ def parse_analog_detection(boxes, scores, class_names, roi=None):
                                 [x22, y21], 
                                 [x22, y22],
                                 [x21, y22]])
+            
+            if roi is not None:
+                intersection = polygon2.intersection(polygon_roi).area
+                if intersection / polygon2.area <= 0.05:
+                    continue
+
             intersection = polygon1.intersection(polygon2).area
             union = polygon1.union(polygon2).area
             iou = intersection / union
