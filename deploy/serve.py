@@ -5,7 +5,7 @@ import os
 import tensorflow as tf
 import numpy as np
 
-from utils import extract_rectangle_area, parse_analog_detection
+from utils import extract_rectangle_area, parse_analog_detection, parse_digital_detection
 
 import time
 
@@ -19,10 +19,12 @@ class MeterValuesRecognition:
     def __init__(self):
         self.saved_path = os.path.join(parent_dir, 'models')
         self.stage1 = tf.saved_model.load(os.path.join(self.saved_path, 'stage1/1'))
-        self.stage2 = tf.saved_model.load(os.path.join(self.saved_path, 'stage2/1'))
+        self.stage2_analog = tf.saved_model.load(os.path.join(self.saved_path, 'stage2_analog/1'))
+        self.stage2_digital = tf.saved_model.load(os.path.join(self.saved_path, 'stage2_digital/1'))
 
         self.predict_stage1 = self.stage1.signatures["serving_default"]
-        self.predict_stage2 = self.stage2.signatures["serving_default"]
+        self.predict_stage2_analog = self.stage2_analog.signatures["serving_default"]
+        self.predict_stage2_digital = self.stage2_digital.signatures["serving_default"]
         self.int2label_stage1 ={
             0: "analog",
             1: "digital",
@@ -54,7 +56,7 @@ class MeterValuesRecognition:
         else:
             response["counter_class"] = 'other'
         response["counter_score"] = str(detected_score)
-        if detected_class != 0:
+        if detected_class > 1:
             et = time.time()
             response["time"] = str(et - st)
             return response            
@@ -63,8 +65,12 @@ class MeterValuesRecognition:
         except:
             response["error"] = "error in warping after 1st stage"
             return response
+
         tensor_image = tf.convert_to_tensor(image_cropped, dtype=tf.float32)
-        predictions = self.predict_stage2(tensor_image)
+        if detected_class == 0:
+            predictions = self.predict_stage2_analog(tensor_image)
+        else:
+            predictions = self.predict_stage2_digital(tensor_image)
         kept_bboxes = np.array(predictions['bboxes_stage2'])[0]
         kept_scores = np.array(predictions['scores_stage2'])[0]
         labels = np.array(predictions['labels'])[0]
@@ -73,8 +79,10 @@ class MeterValuesRecognition:
         roi = roi.astype(np.float64) * ratio
 
         class_names= [f'{int(x)}' for x in labels]
-
-        text, boxes, scores, class_names = parse_analog_detection(kept_bboxes, kept_scores, class_names, roi)
+        if detected_class == 0:
+            text, boxes, scores, class_names = parse_analog_detection(kept_bboxes, kept_scores, class_names, roi)
+        else:
+            text, boxes, scores, class_names = parse_digital_detection(kept_bboxes, kept_scores, class_names, roi)
         if not 'x' in text:
             response["success"] = True
         response["text"] = text

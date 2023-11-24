@@ -81,11 +81,14 @@ def visualize_detections(
 ):
     """Visualize Detections"""
     image = np.array(image, dtype=np.uint8)
+    image = image[:, :, ::-1]
     plt.figure(figsize=figsize)
     plt.axis("off")
     plt.imshow(image)
     ax = plt.gca()
     for box, _cls, score in zip(boxes, classes, scores):
+        if _cls == '14':
+            _cls = ''
         text = f"{_cls}"#"{}: {:.2f}".format(_cls, score)
         x1, y1, x2, y2 = box
         w, h = x2 - x1, y2 - y1

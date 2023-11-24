@@ -112,9 +112,22 @@ if __name__ == '__main__':
         signatures={"serving_default": export_model_stage1(model_stage_1, labels)},
     )
 
-    checkpoint_path_stage2 = 'retinanet/stage2.keras'
+    checkpoint_path_stage2 = 'retinanet/stage2_analog.keras'
     model_stage_2 = tf.keras.saving.load_model(checkpoint_path_stage2)
-    model_dir = './models/stage2/'
+    model_dir = './models/stage2_analog/'
+    model_sig_version = 1
+    model_sig_export_path = os.path.join(model_dir, str(model_sig_version))
+    labels = [f'{i}' for i in range(17)]
+
+    tf.saved_model.save(
+        model_stage_2,
+        export_dir=model_sig_export_path,
+        signatures={"serving_default": export_model_stage2(model_stage_2, labels)},
+    )
+
+    checkpoint_path_stage2 = 'retinanet/stage2_digital.keras'
+    model_stage_2 = tf.keras.saving.load_model(checkpoint_path_stage2)
+    model_dir = './models/stage2_digital/'
     model_sig_version = 1
     model_sig_export_path = os.path.join(model_dir, str(model_sig_version))
     labels = [f'{i}' for i in range(17)]

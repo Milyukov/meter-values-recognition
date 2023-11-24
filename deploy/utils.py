@@ -293,4 +293,106 @@ def parse_analog_detection(boxes, scores, class_names, roi=None):
             num_of_unknown = int(num_of_unknown + 0.5) - 1
             text += 'x' * num_of_unknown + kept_class_names[indices][index]
     return text, kept_boxes, kept_scores, kept_class_names
+
+def parse_digital_detection(boxes, scores, class_names, roi=None):
+    kept_indices = []
+    kept_boxes = []
+    kept_scores = []
+    kept_class_names = []
+    digits_after_fpoint = []
+    # filter out areas after point except the largest one
+    area = 0
+    largest_index = -1
+    indecies_to_remove = []
+    for box_index, (box, _cls, score) in enumerate(zip(boxes, class_names, scores)):
+        if _cls == '14':
+            indecies_to_remove.append(box_index)
+            x1, y1, x2, y2 = box
+            w, h = x2 - x1, y2 - y1
+            if area < abs(w * h):
+                area = w * h
+                largest_index = box_index
+    if len(indecies_to_remove) > 0:
+        indecies_to_remove.remove(largest_index)
+    if roi is not None:
+        xr1, yr1 = roi[0, :]
+        xr2, yr2 = roi[2, :]
+        polygon_roi = Polygon([[xr1, yr1], 
+                        [xr2, yr1], 
+                        [xr2, yr2],
+                        [xr1, yr2]])
+    for box_index1, (box1, _cls1, score1) in enumerate(zip(boxes, class_names, scores)):
+        if _cls1 == '14':
+            if box_index1 in indecies_to_remove:
+                continue
+        duplicated = False
+        x11, y11, x12, y12 = box1
+        w1, h1 = x12 - x11, y12 - y11
+        polygon1 = Polygon([[x11, y11], 
+                            [x12, y11], 
+                            [x12, y12],
+                            [x11, y12]])
+        
+        if roi is not None:
+            intersection = polygon1.intersection(polygon_roi).area
+            iou = intersection / polygon1.area
+            if iou <= 0.05:
+                continue
+
+        for box_index2, (box2, _cls2, score2) in enumerate(zip(boxes, class_names, scores)):
+            if box_index1 == box_index2:
+                continue
+            x21, y21, x22, y22 = box2
+            w2, h2 = x22 - x21, y22 - y21
+            polygon2 = Polygon([[x21, y21], 
+                                [x22, y21], 
+                                [x22, y22],
+                                [x21, y22]])
+            
+            if roi is not None:
+                intersection = polygon2.intersection(polygon_roi).area
+                if intersection / polygon2.area <= 0.05:
+                    continue
+
+            intersection = polygon1.intersection(polygon2).area
+            union = polygon1.union(polygon2).area
+            iou = intersection / union
+            if _cls2 == '14':
+                if box_index2 in indecies_to_remove:
+                    continue
+                if intersection > 0.2 * polygon1.area:
+                    digits_after_fpoint.append(box_index1)
+            elif iou > 0.9:
+                if score1 > score2:
+                    if not box_index1 in kept_indices:
+                        kept_indices.append(box_index1)
+                    duplicated = True
+                else:
+                    if not box_index2 in kept_indices:
+                        kept_indices.append(box_index2)
+                    duplicated = True
+                break
+        if not duplicated:
+            kept_indices.append(box_index1)
+    kept_boxes = boxes[kept_indices]
+    kept_scores = scores[kept_indices]
+    kept_class_names = np.array(class_names)[kept_indices]
+    one_hot_digits_after_fpoint = np.array([1 if i in digits_after_fpoint else 0 for i in range(len(boxes))])
+    one_hot_digits_after_fpoint = one_hot_digits_after_fpoint[kept_indices]
+    # sort by x-coordinate
+    indices = np.argsort(kept_boxes[:, 0])
+    xs = kept_boxes[indices][:, 0]
+    dist_between_digits = np.median(np.diff(xs))
+    one_hot_digits_after_fpoint = one_hot_digits_after_fpoint[indices]
+    fpoint_pos = -1
+    if np.any(one_hot_digits_after_fpoint > 0):
+        fpoint_pos = (one_hot_digits_after_fpoint > 0).argmax()
+    text = ''
+    for index in range(len(kept_class_names)):
+        if kept_class_names[indices][index] == '14':
+            continue
+        if index == fpoint_pos:
+            text += '.'
+        text += kept_class_names[indices][index]
+    return text, kept_boxes, kept_scores, kept_class_names
             
