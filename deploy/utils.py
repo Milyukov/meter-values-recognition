@@ -105,7 +105,7 @@ def process_bboxes(im, bboxes, width, height):
     return im_resized, bboxes_resized 
     
 
-def extract_rectangle_area(im_resized, bbox, keypoints):
+def extract_rectangle_area(im_resized, bbox, keypoints, x_extend=None, y_extend=None):
     # evaluate homography transform to warp and crop image inside keypoints
     # crop keypoints coordinates
     x_min = np.min(keypoints[::2])
@@ -126,18 +126,22 @@ def extract_rectangle_area(im_resized, bbox, keypoints):
     h_inv, status = cv2.findHomography(keypoints_planar, keypoints.astype(np.int32))
 
     # extend area
+    if x_extend is None:
+        x_extend = height//2
+    if y_extend is None:
+        y_extend = 2 * height//3
     keypoints_planar_extended = keypoints_planar + np.array(
-        [[-height//2, -2 * height//3], 
-        [height//2, -2 * height//3], 
-        [height//2, 2 * height//3], 
-        [-height//2, 2 * height//3]])
+        [[-x_extend, -y_extend], 
+        [x_extend, -y_extend], 
+        [x_extend, y_extend], 
+        [-x_extend, y_extend]])
     
     # generate ROI inside cropped region
     roi = np.array([
-        [height//2, 2 * height//3],
-        [width + height//2, 2 * height//3],
-        [width + height//2, height + 2 * height//3],
-        [height//2, height + 2 * height//3],
+        [x_extend, y_extend],
+        [width + x_extend, y_extend],
+        [width + x_extend, height + y_extend],
+        [x_extend, height + y_extend],
     ])
 
     # use inverse homography to choose new points on the original image
