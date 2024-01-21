@@ -31,14 +31,15 @@ class FeaturePyramid(keras.layers.Layer):
     def __init__(self, backbone=None, **kwargs):
         super().__init__(name="FeaturePyramid", **kwargs)
         self.backbone = backbone if backbone else get_backbone()
-        self.conv_c3_1x1 = keras.layers.Conv2D(256, 1, 1, "same", kernel_regularizer=l2(0.1))
-        self.conv_c4_1x1 = keras.layers.Conv2D(256, 1, 1, "same", kernel_regularizer=l2(0.1))
-        self.conv_c5_1x1 = keras.layers.Conv2D(256, 1, 1, "same", kernel_regularizer=l2(0.1))
-        self.conv_c3_3x3 = keras.layers.Conv2D(256, 3, 1, "same", kernel_regularizer=l2(0.1))
-        self.conv_c4_3x3 = keras.layers.Conv2D(256, 3, 1, "same", kernel_regularizer=l2(0.1))
-        self.conv_c5_3x3 = keras.layers.Conv2D(256, 3, 1, "same", kernel_regularizer=l2(0.1))
-        self.conv_c6_3x3 = keras.layers.Conv2D(256, 3, 2, "same", kernel_regularizer=l2(0.1))
-        self.conv_c7_3x3 = keras.layers.Conv2D(256, 3, 2, "same", kernel_regularizer=l2(0.1))
+        self.reg_weight = 0.1
+        self.conv_c3_1x1 = keras.layers.Conv2D(256, 1, 1, "same", kernel_regularizer=l2(self.reg_weight))
+        self.conv_c4_1x1 = keras.layers.Conv2D(256, 1, 1, "same", kernel_regularizer=l2(self.reg_weight))
+        self.conv_c5_1x1 = keras.layers.Conv2D(256, 1, 1, "same", kernel_regularizer=l2(self.reg_weight))
+        self.conv_c3_3x3 = keras.layers.Conv2D(256, 3, 1, "same", kernel_regularizer=l2(self.reg_weight))
+        self.conv_c4_3x3 = keras.layers.Conv2D(256, 3, 1, "same", kernel_regularizer=l2(self.reg_weight))
+        self.conv_c5_3x3 = keras.layers.Conv2D(256, 3, 1, "same", kernel_regularizer=l2(self.reg_weight))
+        self.conv_c6_3x3 = keras.layers.Conv2D(256, 3, 2, "same", kernel_regularizer=l2(self.reg_weight))
+        self.conv_c7_3x3 = keras.layers.Conv2D(256, 3, 2, "same", kernel_regularizer=l2(self.reg_weight))
         self.upsample_2x = keras.layers.UpSampling2D(2)
 
     def call(self, images, training=False):
@@ -81,9 +82,10 @@ def build_head(output_filters, bias_init):
     """
     head = keras.Sequential([keras.Input(shape=[None, None, 256])])
     kernel_init = tf.initializers.RandomNormal(0.0, 0.01)
+    reg_weight = 0.001
     for _ in range(4):
         head.add(
-            keras.layers.Conv2D(256, 3, padding="same", kernel_initializer=kernel_init, kernel_regularizer=l2(0.001))
+            keras.layers.Conv2D(256, 3, padding="same", kernel_initializer=kernel_init, kernel_regularizer=l2(reg_weight))
         )
         head.add(keras.layers.ReLU())
     head.add(
@@ -94,7 +96,7 @@ def build_head(output_filters, bias_init):
             padding="same",
             kernel_initializer=kernel_init,
             bias_initializer=bias_init,
-            kernel_regularizer=l2(0.001)
+            kernel_regularizer=l2(reg_weight)
         )
     )
     return head
@@ -119,7 +121,7 @@ class RetinaNet(keras.Model):
         if augmentation is None:
             self.augmentation = keras.Sequential(
                 [
-                    keras.layers.RandomBrightness(0.2),
+                    keras.layers.RandomBrightness(0.4),
                     keras.layers.RandomContrast(0.2)
                     ]
             )
