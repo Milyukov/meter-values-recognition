@@ -39,8 +39,9 @@ if __name__ == '__main__':
     model_dir = "retinanet/"
     label_encoder = LabelEncoder()
 
-    num_classes = 17
-    batch_size = 16
+    #num_classes = 20 # digital
+    num_classes = 17 # analog
+    batch_size = 12
 
     learning_rates = [0.0001, 0.00001, 0.000005]#[2.5e-06, 0.000625, 0.00125, 0.0025, 0.00025, 2.5e-05]
     learning_rate_boundaries = [150, 250] #[125, 250,500, 240000, 360000] 
@@ -57,8 +58,8 @@ if __name__ == '__main__':
 
     logdir = "logs/stage2/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
-    checkpoint_path = "retinanet/stage2.keras"
-    checkpoint_backup_path = "retinanet/stage2_bak.keras"
+    checkpoint_path = "retinanet/stage2_analog.keras"
+    checkpoint_backup_path = "retinanet/stage2_analog_bak.keras"
     callbacks_list = [
         tf.keras.callbacks.ModelCheckpoint(
             filepath=checkpoint_path,
