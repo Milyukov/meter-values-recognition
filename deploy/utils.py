@@ -337,7 +337,7 @@ def parse_digital_detection(boxes, scores, class_names, roi=None):
                             [x12, y12],
                             [x11, y12]])
         
-        if roi is not None:
+        if roi is not None and polygon1.area > 0:
             intersection = polygon1.intersection(polygon_roi).area
             iou = intersection / polygon1.area
             if iou <= 0.05:
@@ -353,7 +353,7 @@ def parse_digital_detection(boxes, scores, class_names, roi=None):
                                 [x22, y22],
                                 [x21, y22]])
             
-            if roi is not None:
+            if roi is not None and polygon2.area > 0:
                 intersection = polygon2.intersection(polygon_roi).area
                 if intersection / polygon2.area <= 0.05:
                     continue
