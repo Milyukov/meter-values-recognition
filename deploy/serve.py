@@ -65,7 +65,7 @@ class MeterValuesRecognition:
                 image_cropped, roi = extract_rectangle_area(image_resized, kept_bboxes[:4], kept_bboxes[4:])
             else:
                 image_cropped, roi = extract_rectangle_area(
-                    image_resized, kept_bboxes[:4], kept_bboxes[4:], x_extend=0, y_extend=0)
+                    image_resized, kept_bboxes[:4], kept_bboxes[4:])#, x_extend=0, y_extend=0)
         except:
             response["error"] = "error in warping after 1st stage"
             return response
