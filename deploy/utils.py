@@ -360,6 +360,8 @@ def parse_digital_detection(boxes, scores, class_names, roi=None):
 
             intersection = polygon1.intersection(polygon2).area
             union = polygon1.union(polygon2).area
+            if union == 0:
+                continue
             iou = intersection / union
             if _cls2 == '14':
                 if box_index2 in indecies_to_remove:
