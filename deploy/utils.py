@@ -189,7 +189,7 @@ def parse_analog_detection(boxes, scores, class_names, roi=None):
     largest_index = -1
     indecies_to_remove = []
     for box_index, (box, _cls, score) in enumerate(zip(boxes, class_names, scores)):
-        if _cls == '14':
+        if _cls == 'floatp':
             indecies_to_remove.append(box_index)
             x1, y1, x2, y2 = box
             w, h = x2 - x1, y2 - y1
@@ -206,7 +206,7 @@ def parse_analog_detection(boxes, scores, class_names, roi=None):
                         [xr2, yr2],
                         [xr1, yr2]])
     for box_index1, (box1, _cls1, score1) in enumerate(zip(boxes, class_names, scores)):
-        if _cls1 == '14':
+        if _cls1 == 'floatp':
             if box_index1 in indecies_to_remove:
                 continue
         duplicated = False
@@ -241,7 +241,7 @@ def parse_analog_detection(boxes, scores, class_names, roi=None):
             intersection = polygon1.intersection(polygon2).area
             union = polygon1.union(polygon2).area
             iou = intersection / union
-            if _cls2 == '14':
+            if _cls2 == 'floatp':
                 if box_index2 in indecies_to_remove:
                     continue
                 if intersection > 0.2 * polygon1.area:
@@ -286,7 +286,7 @@ def parse_analog_detection(boxes, scores, class_names, roi=None):
         fpoint_pos = (one_hot_digits_after_fpoint > 0).argmax()
     text = ''
     for index in range(len(kept_class_names)):
-        if kept_class_names[indices][index] == '14':
+        if kept_class_names[indices][index] == 'floatp':
             continue
         if index == fpoint_pos:
             text += '.'
@@ -309,7 +309,7 @@ def parse_digital_detection(boxes, scores, class_names, roi=None):
     largest_index = -1
     indecies_to_remove = []
     for box_index, (box, _cls, score) in enumerate(zip(boxes, class_names, scores)):
-        if _cls == '14':
+        if _cls == 'floatp':
             indecies_to_remove.append(box_index)
             x1, y1, x2, y2 = box
             w, h = x2 - x1, y2 - y1
@@ -326,7 +326,7 @@ def parse_digital_detection(boxes, scores, class_names, roi=None):
                         [xr2, yr2],
                         [xr1, yr2]])
     for box_index1, (box1, _cls1, score1) in enumerate(zip(boxes, class_names, scores)):
-        if _cls1 == '14':
+        if _cls1 == 'floatp':
             if box_index1 in indecies_to_remove:
                 continue
         duplicated = False
@@ -363,7 +363,7 @@ def parse_digital_detection(boxes, scores, class_names, roi=None):
             if union == 0:
                 continue
             iou = intersection / union
-            if _cls2 == '14':
+            if _cls2 == 'floatp':
                 if box_index2 in indecies_to_remove:
                     continue
                 if intersection > 0.2 * polygon1.area:
@@ -385,20 +385,54 @@ def parse_digital_detection(boxes, scores, class_names, roi=None):
     kept_class_names = np.array(class_names)[kept_indices]
     one_hot_digits_after_fpoint = np.array([1 if i in digits_after_fpoint else 0 for i in range(len(boxes))])
     one_hot_digits_after_fpoint = one_hot_digits_after_fpoint[kept_indices]
-    # sort by x-coordinate
-    indices = np.argsort(kept_boxes[:, 0])
-    xs = kept_boxes[indices][:, 0]
-    dist_between_digits = np.median(np.diff(xs))
-    one_hot_digits_after_fpoint = one_hot_digits_after_fpoint[indices]
-    fpoint_pos = -1
-    if np.any(one_hot_digits_after_fpoint > 0):
-        fpoint_pos = (one_hot_digits_after_fpoint > 0).argmax()
+    # separate lines
+    ys = kept_boxes[:, 1]
+    median_height = np.median(kept_boxes[:, 3])
+    ys_left = ys.copy().tolist()
+    indices_left = [index for index in range(len(ys_left))]
+    lines = []
+    c_line_y = []
+    c_line_index = []
+    while len(ys_left) > 0:
+        y = ys_left[0]
+        c_line_y.append(y)
+        c_line_index.append(indices_left[0])
+        for index, cy in zip(indices_left[1:], ys_left[1:]):
+            if abs(cy - y) <= median_height / 2:
+                c_line_y.append(cy)
+                c_line_index.append(indices_left[index])
+        lines.append(c_line_index)
+        for index, cy in zip(c_line_index, c_line_y):
+            ys_left.remove(cy)
+            indices_left.remove(index)
+        c_line_y = []
+        c_line_index = []
     text = ''
-    for index in range(len(kept_class_names)):
-        if kept_class_names[indices][index] == '14':
-            continue
-        if index == fpoint_pos:
-            text += '.'
-        text += kept_class_names[indices][index]
+    for line in lines:
+        # sort by x-coordinate
+        indices = np.argsort(kept_boxes[line][:, 0])
+        kept_boxes = kept_boxes[line][indices]
+        kept_class_names = kept_class_names[line][indices]
+        xs = kept_boxes[line][:, 0]
+        ys = kept_boxes[line][:, 1]
+        dist_between_digits = np.median(np.diff(xs))
+        one_hot_digits_after_fpoint = one_hot_digits_after_fpoint[line][indices]
+        fpoint_pos = -1
+        if np.any(one_hot_digits_after_fpoint > 0):
+            fpoint_pos = (one_hot_digits_after_fpoint > 0).argmax()
+        for index in range(len(kept_class_names)):
+            if kept_class_names[index] == 'floatp':
+                continue
+            if index == fpoint_pos:
+                text += '.'
+            if len(text) > 0:
+                if text[-1] in ['T', 'M', 'U', 'V']:
+                    if xs[index] - xs[index - 1] > kept_boxes[line][index - 1, 2] * 1.2 or ys[index] - ys[index - 1] > kept_boxes[line][index - 1, 3] * 0.2:
+                        text += '?;'
+                    else:
+                        text += kept_class_names[index] + ';'
+                        continue
+            text += kept_class_names[index]
+        text += ';'
     return text, kept_boxes, kept_scores, kept_class_names
             

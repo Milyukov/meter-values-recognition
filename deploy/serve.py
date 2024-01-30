@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import traceback
 import os
+from collections import OrderedDict
 
 import tensorflow as tf
 import numpy as np
@@ -31,6 +32,32 @@ class MeterValuesRecognition:
             2: "analog_illegible",
             3: "digital_illegible"
         }
+        self.id2str = OrderedDict([
+      (0, '0'),
+      (1, '1'),
+      (2, '2'),
+      (3, '3'),
+      (4, '4'),
+      (5, '5'),
+      (6, '6'),
+      (7, '7'),
+      (8, '8'),
+      (9, '9'),
+      (10, 'R'),
+      (11, 'T'),
+      (12, 'M'),
+      (13, '_'),
+      (14, 'floatp'),
+      (15, ':'),
+      (16, '^'),
+      (17, 'Q'),
+      (18, 'V'),
+      (19, 'U'),
+      (20, '+'),
+      (21, '-'),
+      (22, 'Ч'),
+      (23, 'C')
+  ])
 
     def infer(self, image, vis=False):
         st = time.time()
@@ -82,7 +109,7 @@ class MeterValuesRecognition:
         response['roi'] = roi.tolist()
         roi = roi.astype(np.float64) * ratio
 
-        class_names= [f'{int(x)}' for x in labels]
+        class_names= [f'{self.id2str[int(x)]}' for x in labels]
         if detected_class == 0:
             text, boxes, scores, class_names = parse_analog_detection(kept_bboxes, kept_scores, class_names, roi)
         else:
