@@ -299,6 +299,7 @@ def parse_analog_detection(boxes, scores, class_names, roi=None):
     return text, kept_boxes, kept_scores, kept_class_names
 
 def parse_digital_detection(boxes, scores, class_names, roi=None):
+    iou_thr = 0.5
     kept_indices = []
     kept_boxes = []
     kept_scores = []
@@ -368,7 +369,7 @@ def parse_digital_detection(boxes, scores, class_names, roi=None):
                     continue
                 if intersection > 0.2 * polygon1.area:
                     digits_after_fpoint.append(box_index1)
-            elif iou > 0.9:
+            elif iou > iou_thr:
                 if score1 > score2:
                     if not box_index1 in kept_indices:
                         kept_indices.append(box_index1)
@@ -397,10 +398,12 @@ def parse_digital_detection(boxes, scores, class_names, roi=None):
         y = ys_left[0]
         c_line_y.append(y)
         c_line_index.append(indices_left[0])
+        min_height = kept_boxes[indices_left[0], 3] - kept_boxes[indices_left[0], 1]
         for index, cy in zip(indices_left[1:], ys_left[1:]):
-            if abs(cy - y) <= median_height / 2:
+            min_height = min(kept_boxes[index, 3] - kept_boxes[index, 1], min_height) 
+            if abs(cy - y) <= min_height / 2:
                 c_line_y.append(cy)
-                c_line_index.append(indices_left[index])
+                c_line_index.append(index)
         lines.append(c_line_index)
         for index, cy in zip(c_line_index, c_line_y):
             ys_left.remove(cy)
@@ -411,17 +414,17 @@ def parse_digital_detection(boxes, scores, class_names, roi=None):
     for line in lines:
         # sort by x-coordinate
         indices = np.argsort(kept_boxes[line][:, 0])
-        kept_boxes = kept_boxes[line][indices]
-        kept_class_names = kept_class_names[line][indices]
+        c_kept_boxes = kept_boxes[line][indices]
+        c_kept_class_names = kept_class_names[line][indices]
         xs = kept_boxes[line][:, 0]
         ys = kept_boxes[line][:, 1]
         dist_between_digits = np.median(np.diff(xs))
-        one_hot_digits_after_fpoint = one_hot_digits_after_fpoint[line][indices]
+        c_one_hot_digits_after_fpoint = one_hot_digits_after_fpoint[line][indices]
         fpoint_pos = -1
-        if np.any(one_hot_digits_after_fpoint > 0):
-            fpoint_pos = (one_hot_digits_after_fpoint > 0).argmax()
-        for index in range(len(kept_class_names)):
-            if kept_class_names[index] == 'floatp':
+        if np.any(c_one_hot_digits_after_fpoint > 0):
+            fpoint_pos = (c_one_hot_digits_after_fpoint > 0).argmax()
+        for index in range(len(c_kept_class_names)):
+            if c_kept_class_names[index] == 'floatp':
                 continue
             if index == fpoint_pos:
                 text += '.'
@@ -430,9 +433,9 @@ def parse_digital_detection(boxes, scores, class_names, roi=None):
                     if xs[index] - xs[index - 1] > kept_boxes[line][index - 1, 2] * 1.2 or ys[index] - ys[index - 1] > kept_boxes[line][index - 1, 3] * 0.2:
                         text += '?;'
                     else:
-                        text += kept_class_names[index] + ';'
+                        text += c_kept_class_names[index] + ';'
                         continue
-            text += kept_class_names[index]
+            text += c_kept_class_names[index]
         text += ';'
     return text, kept_boxes, kept_scores, kept_class_names
             
