@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import traceback
 import os
+import cv2
 from collections import OrderedDict
 
 import tensorflow as tf
@@ -15,6 +16,7 @@ PORT_NUMBER = 8080
 
 parent_dir = os.path.dirname(os.path.realpath(__file__))
 
+
 class MeterValuesRecognition:
 
     def __init__(self):
@@ -26,38 +28,38 @@ class MeterValuesRecognition:
         self.predict_stage1 = self.stage1.signatures["serving_default"]
         self.predict_stage2_analog = self.stage2_analog.signatures["serving_default"]
         self.predict_stage2_digital = self.stage2_digital.signatures["serving_default"]
-        self.int2label_stage1 ={
+        self.int2label_stage1 = {
             0: "analog",
             1: "digital",
             2: "analog_illegible",
             3: "digital_illegible"
         }
         self.id2str = OrderedDict([
-      (0, '0'),
-      (1, '1'),
-      (2, '2'),
-      (3, '3'),
-      (4, '4'),
-      (5, '5'),
-      (6, '6'),
-      (7, '7'),
-      (8, '8'),
-      (9, '9'),
-      (10, 'R'),
-      (11, 'T'),
-      (12, 'M'),
-      (13, '_'),
-      (14, 'floatp'),
-      (15, ':'),
-      (16, '^'),
-      (17, 'Q'),
-      (18, 'V'),
-      (19, 'U'),
-      (20, '+'),
-      (21, '-'),
-      (22, 'Ч'),
-      (23, 'C')
-  ])
+            (0, '0'),
+            (1, '1'),
+            (2, '2'),
+            (3, '3'),
+            (4, '4'),
+            (5, '5'),
+            (6, '6'),
+            (7, '7'),
+            (8, '8'),
+            (9, '9'),
+            (10, 'R'),
+            (11, 'T'),
+            (12, 'M'),
+            (13, '_'),
+            (14, 'floatp'),
+            (15, ':'),
+            (16, '^'),
+            (17, 'Q'),
+            (18, 'V'),
+            (19, 'U'),
+            (20, '+'),
+            (21, '-'),
+            (22, 'Ч'),
+            (23, 'C')
+        ])
 
     def infer(self, image, vis=False):
         st = time.time()
@@ -86,13 +88,13 @@ class MeterValuesRecognition:
         if detected_class > 1:
             et = time.time()
             response["time"] = str(et - st)
-            return response            
+            return response
         try:
             if detected_class == 0:
                 image_cropped, roi = extract_rectangle_area(image_resized, kept_bboxes[:4], kept_bboxes[4:])
             else:
                 image_cropped, roi = extract_rectangle_area(
-                    image_resized, kept_bboxes[:4], kept_bboxes[4:])#, x_extend=0, y_extend=0)
+                    image_resized, kept_bboxes[:4], kept_bboxes[4:])  # , x_extend=0, y_extend=0)
         except:
             response["error"] = "error in warping after 1st stage"
             return response
@@ -109,7 +111,7 @@ class MeterValuesRecognition:
         response['roi'] = roi.tolist()
         roi = roi.astype(np.float64) * ratio
 
-        class_names= [f'{self.id2str[int(x)]}' for x in labels]
+        class_names = [f'{self.id2str[int(x)]}' for x in labels]
         if detected_class == 0:
             text, boxes, scores, class_names = parse_analog_detection(kept_bboxes, kept_scores, class_names, roi)
         else:
@@ -129,20 +131,31 @@ class MeterValuesRecognition:
             response["image_cropped"] = image_cropped.tolist()
         return response
 
+
 if __name__ == '__main__':
     os.system('nvidia-smi')
 
     app = Flask(__name__)
     ocr = MeterValuesRecognition()
 
+
     @app.route('/recognize', methods=["POST"])
     def infer():
+        image_file = request.files['image']
+        image = cv2.imdecode(np.fromfile(image_file, np.uint8), cv2.IMREAD_UNCHANGED)
+        return ocr.infer(image, True)
+
+
+    @app.route('/recognizeJSON', methods=["POST"])
+    def infer_json():
         data = request.json
         image = data['image']
         return ocr.infer(image, False)
-    
+
+
     @app.errorhandler(Exception)
     def handle_exception(e):
         return jsonify(stackTrace=traceback.format_exc())
+
 
     app.run(host=HOST, port=PORT_NUMBER)
