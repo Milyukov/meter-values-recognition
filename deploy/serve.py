@@ -34,9 +34,9 @@ class MeterValuesRecognition:
         self.stage1 = tf.saved_model.load(os.path.join(self.saved_path, 'stage1/1'))
         self.stage2_analog = tf.saved_model.load(os.path.join(self.saved_path, 'stage2_analog/1'))
 
-        self.stage2_digital = tf.saved_model.load('/home/gmilyukov/Projects/tf-model-zoo/exported_model_counters')
+        # self.stage2_digital = tf.saved_model.load('/home/gmilyukov/Projects/tf-model-zoo/exported_model_counters')
 
-        #self.stage2_digital = tf.saved_model.load(os.path.join(self.saved_path, 'stage2_digital/1'))
+        self.stage2_digital = tf.saved_model.load(os.path.join(self.saved_path, 'exported_model_counters'))
 
         self.predict_stage1 = self.stage1.signatures["serving_default"]
         self.predict_stage2_analog = self.stage2_analog.signatures["serving_default"]
@@ -228,7 +228,6 @@ class MeterValuesRecognition:
             class_names= [f'{self.id2str[int(x)]}' for x in labels]
         else:
             ratio =  512 / np.max(image_cropped.shape[:2])
-            #image_cropped = resize_image(image_cropped, 512, 512)
             image = build_inputs_for_object_detection(image_cropped, (512, 512))
             tensor_image = tf.convert_to_tensor(image, dtype=tf.float32)
             tensor_image = tf.expand_dims(tensor_image, axis=0)
@@ -237,7 +236,7 @@ class MeterValuesRecognition:
             kept_bboxes = np.array(predictions['detection_boxes'])[0][:, (1, 0, 3, 2)]
             kept_scores = np.array(predictions['detection_scores'])[0]
             labels = np.array(predictions['detection_classes'])[0]
-            indices = kept_scores > 0.5
+            indices = kept_scores > 0.4
             kept_bboxes = kept_bboxes[indices]
             kept_scores = kept_scores[indices]
             labels = labels[indices]
