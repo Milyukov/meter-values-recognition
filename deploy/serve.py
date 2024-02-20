@@ -273,10 +273,18 @@ if __name__ == '__main__':
 
     @app.route('/recognize', methods=["POST"])
     def infer():
+        image_file = request.files['image']
+        image = cv2.imdecode(np.fromfile(image_file, np.uint8), cv2.IMREAD_UNCHANGED)
+        return ocr.infer(image, True)
+
+
+    @app.route('/recognizeJSON', methods=["POST"])
+    def infer_json():
         data = request.json
         image = data['image']
-        return ocr.infer(image, True)
-    
+        return ocr.infer(image, False)
+
+
     @app.errorhandler(Exception)
     def handle_exception(e):
         return jsonify(stackTrace=traceback.format_exc())
