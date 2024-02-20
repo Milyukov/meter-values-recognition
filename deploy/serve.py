@@ -204,12 +204,12 @@ class MeterValuesRecognition:
         else:
             response["counter_class"] = 'other'
         response["counter_score"] = str(detected_score)
-        if detected_class > 1:
-            et = time.time()
-            response["time"] = str(et - st)
-            return response            
+        # if detected_class > 1:
+        #     et = time.time()
+        #     response["time"] = str(et - st)
+        #     return response            
         try:
-            if detected_class == 0:
+            if detected_class in [0, 2]:
                 image_cropped, roi = extract_rectangle_area(image_resized, kept_bboxes[:4], kept_bboxes[4:])
             else:
                 image_cropped, roi = extract_rectangle_area(
@@ -218,7 +218,7 @@ class MeterValuesRecognition:
             response["error"] = "error in warping after 1st stage"
             return response
 
-        if detected_class == 0:
+        if detected_class in [0, 2]:
             tensor_image = tf.convert_to_tensor(image_cropped, dtype=tf.float32)
             predictions = self.predict_stage2_analog(tensor_image)
             kept_bboxes = np.array(predictions['bboxes_stage2'])[0]
@@ -245,12 +245,13 @@ class MeterValuesRecognition:
         response['roi'] = roi.tolist()
         roi = roi.astype(np.float64) * ratio
 
-        if detected_class == 0:
+        if detected_class in [0, 2]:
             text, boxes, scores, class_names = parse_analog_detection(kept_bboxes, kept_scores, class_names, roi)
         else:
             text, boxes, scores, class_names = parse_digital_detection(kept_bboxes, kept_scores, class_names, roi)
         if not 'x' in text:
             response["success"] = True
+            response["counter_class"].replace('_illegible', '')
         response["text"] = text
         et = time.time()
         response["time"] = str(et - st)
