@@ -282,16 +282,17 @@ if __name__ == '__main__':
     @app.route('/recognize', methods=["POST"])
     def infer():
         image_file = request.files['image']
+        counter_type = request.files['counter_type']
         image = cv2.imdecode(np.fromfile(image_file, np.uint8), cv2.IMREAD_UNCHANGED)
-        return ocr.infer(image, True)
+        return ocr.infer(image, counter_type, True)
 
 
     @app.route('/recognizeJSON', methods=["POST"])
     def infer_json():
         data = request.json
         image = data['image']
-        counter_type = data.get('counter_type', 'electrical')
-        return ocr.infer(image, counter_type, False)
+        counter_type = data.get('counter_type', 'water')
+        return ocr.infer(image, counter_type, True)
 
 
     @app.errorhandler(Exception)
