@@ -33,14 +33,13 @@ class MeterValuesRecognition:
         self.saved_path = os.path.join(parent_dir, 'models')
         self.stage1 = tf.saved_model.load(os.path.join(self.saved_path, 'stage1/1'))
         self.stage2_analog = tf.saved_model.load(os.path.join(self.saved_path, 'stage2_analog/1'))
-
-        # self.stage2_digital = tf.saved_model.load('/home/gmilyukov/Projects/tf-model-zoo/exported_model_counters')
-
-        self.stage2_digital = tf.saved_model.load(os.path.join(self.saved_path, 'exported_model_counters'))
+        self.stage2_digital_electrical = tf.saved_model.load(os.path.join(self.saved_path, 'exported_model_counters'))
+        self.stage2_digital_water = tf.saved_model.load(os.path.join(self.saved_path, 'stage2_digital/1'))
 
         self.predict_stage1 = self.stage1.signatures["serving_default"]
         self.predict_stage2_analog = self.stage2_analog.signatures["serving_default"]
-        self.predict_stage2_digital = self.stage2_digital.signatures["serving_default"]
+        self.predict_stage2_digital_electrical = self.stage2_digital_electrical.signatures["serving_default"]
+        self.predict_stage2_digital_water = self.stage2_digital_water.signatures["serving_default"]
         self.int2label_stage1 ={
             0: "analog",
             1: "digital",
@@ -180,7 +179,7 @@ class MeterValuesRecognition:
         }
 }
 
-    def infer(self, image, vis=False):
+    def infer(self, image, counter_type, vis=False):
         st = time.time()
         image = np.array(image, dtype=np.uint8)
         response = {
@@ -227,20 +226,29 @@ class MeterValuesRecognition:
             ratio = np.array(predictions['ratio'])[0]
             class_names= [f'{self.id2str[int(x)]}' for x in labels]
         else:
-            ratio =  512 / np.max(image_cropped.shape[:2])
-            image = build_inputs_for_object_detection(image_cropped, (512, 512))
-            tensor_image = tf.convert_to_tensor(image, dtype=tf.float32)
-            tensor_image = tf.expand_dims(tensor_image, axis=0)
-            tensor_image = tf.cast(tensor_image, dtype = tf.uint8)
-            predictions = self.predict_stage2_digital(tensor_image)
-            kept_bboxes = np.array(predictions['detection_boxes'])[0][:, (1, 0, 3, 2)]
-            kept_scores = np.array(predictions['detection_scores'])[0]
-            labels = np.array(predictions['detection_classes'])[0]
-            indices = kept_scores > 0.4
-            kept_bboxes = kept_bboxes[indices]
-            kept_scores = kept_scores[indices]
-            labels = labels[indices]
-            class_names= [f'{self.id2str_tf[int(x)]["name"]}' for x in labels]
+            if counter_type == 'electrical':
+                ratio =  512 / np.max(image_cropped.shape[:2])
+                image = build_inputs_for_object_detection(image_cropped, (512, 512))
+                tensor_image = tf.convert_to_tensor(image, dtype=tf.float32)
+                tensor_image = tf.expand_dims(tensor_image, axis=0)
+                tensor_image = tf.cast(tensor_image, dtype = tf.uint8)
+                predictions = self.predict_stage2_digital_electrical(tensor_image)
+                kept_bboxes = np.array(predictions['detection_boxes'])[0][:, (1, 0, 3, 2)]
+                kept_scores = np.array(predictions['detection_scores'])[0]
+                labels = np.array(predictions['detection_classes'])[0]
+                indices = kept_scores > 0.4
+                kept_bboxes = kept_bboxes[indices]
+                kept_scores = kept_scores[indices]
+                labels = labels[indices]
+                class_names= [f'{self.id2str_tf[int(x)]["name"]}' for x in labels]
+            else:
+                tensor_image = tf.convert_to_tensor(image_cropped, dtype=tf.float32)
+                predictions = self.predict_stage2_digital_water(tensor_image)
+                kept_bboxes = np.array(predictions['bboxes_stage2'])[0]
+                kept_scores = np.array(predictions['scores_stage2'])[0]
+                labels = np.array(predictions['labels'])[0]
+                ratio = np.array(predictions['ratio'])[0]
+                class_names= [f'{self.id2str[int(x)]}' for x in labels]
 
         response['roi'] = roi.tolist()
         roi = roi.astype(np.float64) * ratio
@@ -282,7 +290,8 @@ if __name__ == '__main__':
     def infer_json():
         data = request.json
         image = data['image']
-        return ocr.infer(image, False)
+        counter_type = data.get('counter_type', 'electrical')
+        return ocr.infer(image, counter_type, False)
 
 
     @app.errorhandler(Exception)
