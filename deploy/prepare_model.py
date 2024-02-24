@@ -2,8 +2,12 @@
 # The signature definition is defined by the input and output tensors,
 # and stored with the default serving key
 import tensorflow as tf
+from tensorflow import keras
 import os
 import sys
+
+sys.path.append("..")
+from model.model_stage2 import RetinaNetLoss
 
 # Get the parent directory
 parent_dir = os.path.dirname(os.path.realpath(__file__)) + '/../'
@@ -74,7 +78,7 @@ def export_model_stage2(model_stage_2, labels_stage2):
     def serving_fn(image_cropped):
         image = tf.keras.Input(shape=[None, None, 3], name="image_warpped")
         predictions = model_stage_2(image, training=False)
-        detections = model_stage2.DecodePredictions(confidence_threshold=0.5)(image, predictions)
+        detections = model_stage2.DecodePredictions(confidence_threshold=0.4)(image, predictions)
         inference_model = tf.keras.Model(inputs=image, outputs=detections)
         processed_image, ratio = prepare_image(image_cropped)
         detections = inference_model(processed_image)
@@ -112,7 +116,7 @@ if __name__ == '__main__':
         signatures={"serving_default": export_model_stage1(model_stage_1, labels)},
     )
 
-    checkpoint_path_stage2 = 'retinanet/stage2_analog.keras'
+    checkpoint_path_stage2 = 'retinanet/stage2_analog_new.keras'
     model_stage_2 = tf.keras.saving.load_model(checkpoint_path_stage2)
     model_dir = './models/stage2_analog/'
     model_sig_version = 1
@@ -125,8 +129,12 @@ if __name__ == '__main__':
         signatures={"serving_default": export_model_stage2(model_stage_2, labels)},
     )
 
-    checkpoint_path_stage2 = 'retinanet/stage2_digital.keras'
-    model_stage_2 = tf.keras.saving.load_model(checkpoint_path_stage2)
+    if checkpoint_path_stage2.endswith('.keras'):
+        model_stage_2 = tf.keras.saving.load_model(checkpoint_path_stage2)
+    else:
+        custom_objects = {"RetinaNetLoss": RetinaNetLoss}
+        with tf.keras.saving.custom_object_scope(custom_objects):
+            model_stage_2 = tf.keras.models.load_model(checkpoint_path_stage2)
     model_dir = './models/stage2_digital/'
     model_sig_version = 1
     model_sig_export_path = os.path.join(model_dir, str(model_sig_version))
