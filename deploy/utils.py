@@ -3,6 +3,29 @@ import numpy as np
 
 from shapely.geometry import Polygon
 
+def resize_image(im, width, height):
+    h, w, c = im.shape
+    delta_top = 0
+    delta_bottom = 0
+    delta_left = 0
+    delta_right = 0
+    if h > w:
+        delta = h - w
+        delta_left = delta // 2
+        delta_right = delta // 2
+        if delta % 2 != 0:
+            delta_right += 1
+    else:
+        delta = w - h
+        delta_top = delta // 2
+        delta_bottom = delta // 2
+        if delta % 2 != 0:
+            delta_top += 1
+    im_resized = cv2.copyMakeBorder(
+        im, delta_top, delta_bottom, delta_left, delta_right, cv2.BORDER_CONSTANT, value=0)
+    im_resized = cv2.resize(im_resized, (width, height))
+    return im_resized
+
 def resize_image_keypoints(im, keypoints, width, height):
     h, w, c = im.shape
     delta_top = 0
@@ -310,7 +333,7 @@ def parse_digital_detection(boxes, scores, class_names, roi=None):
     largest_index = -1
     indecies_to_remove = []
     for box_index, (box, _cls, score) in enumerate(zip(boxes, class_names, scores)):
-        if _cls == 'floatp':
+        if _cls.lower() == 'floatp':
             indecies_to_remove.append(box_index)
             x1, y1, x2, y2 = box
             w, h = x2 - x1, y2 - y1
@@ -326,8 +349,12 @@ def parse_digital_detection(boxes, scores, class_names, roi=None):
                         [xr2, yr1], 
                         [xr2, yr2],
                         [xr1, yr2]])
+    
+    duplicates = set()
     for box_index1, (box1, _cls1, score1) in enumerate(zip(boxes, class_names, scores)):
-        if _cls1 == 'floatp':
+        if box_index1 in duplicates:
+            continue
+        if _cls1.lower() == 'floatp':
             if box_index1 in indecies_to_remove:
                 continue
         duplicated = False
@@ -345,6 +372,8 @@ def parse_digital_detection(boxes, scores, class_names, roi=None):
                 continue
 
         for box_index2, (box2, _cls2, score2) in enumerate(zip(boxes, class_names, scores)):
+            if box_index2 in duplicates:
+                continue
             if box_index1 == box_index2:
                 continue
             x21, y21, x22, y22 = box2
@@ -364,20 +393,22 @@ def parse_digital_detection(boxes, scores, class_names, roi=None):
             if union == 0:
                 continue
             iou = intersection / union
-            if _cls2 == 'floatp':
+            if _cls2.lower() == 'floatp':
                 if box_index2 in indecies_to_remove:
                     continue
                 if intersection > 0.2 * polygon1.area:
                     digits_after_fpoint.append(box_index1)
-            elif iou > iou_thr:
+            elif iou > iou_thr or intersection > max(polygon1.area, polygon2.area) * 0.5:
                 if score1 > score2:
                     if not box_index1 in kept_indices:
                         kept_indices.append(box_index1)
                     duplicated = True
+                    duplicates.add(box_index2)
                 else:
                     if not box_index2 in kept_indices:
                         kept_indices.append(box_index2)
                     duplicated = True
+                    duplicates.add(box_index1)
                 break
         if not duplicated:
             kept_indices.append(box_index1)
@@ -424,12 +455,12 @@ def parse_digital_detection(boxes, scores, class_names, roi=None):
         if np.any(c_one_hot_digits_after_fpoint > 0):
             fpoint_pos = (c_one_hot_digits_after_fpoint > 0).argmax()
         for index in range(len(c_kept_class_names)):
-            if c_kept_class_names[index] == 'floatp':
+            if c_kept_class_names[index].lower() == 'floatp':
                 continue
             if index == fpoint_pos:
                 text += '.'
             if len(text) > 0:
-                if text[-1] in ['T', 'M', 'U', 'V']:
+                if text[-1].lower() in ['t', 'm', 'u', 'v', 'arrow']:
                     if xs[index] - xs[index - 1] > kept_boxes[line][index - 1, 2] * 1.2 or ys[index] - ys[index - 1] > kept_boxes[line][index - 1, 3] * 0.2:
                         text += '?;'
                     else:

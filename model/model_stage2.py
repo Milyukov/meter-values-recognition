@@ -311,5 +311,5 @@ class RetinaNetLoss(tf.losses.Loss):
     @classmethod
     def from_config(cls, config):
         num_classes_config = config.pop("num_classes")
-        num_classes = keras.saving.deserialize_keras_object(num_classes_config)
-        return cls(num_classes=num_classes, **config)
+        #num_classes = tf.keras.saving.deserialize_keras_object(num_classes_config)
+        return cls(num_classes=num_classes_config, **config)

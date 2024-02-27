@@ -17,13 +17,13 @@ sys.path.append(parent_dir)
 parser = argparse.ArgumentParser()
 parser.add_argument("images", help="path to images", type=str)
 
-ENDPOINT_URL = "http://localhost:8080/recognize"
+ENDPOINT_URL = "http://localhost:8080/recognizeJSON"
 
 if __name__ == '__main__':
     args = parser.parse_args()
 
     for filename in os.listdir(args.images):
-        if not filename.lower().endswith(('.jpg', '*.png', '*.bmp')):
+        if not filename.lower().endswith(('.jpg', '.jpeg', '*.png', '*.bmp')):
             continue
         st = time.time()
         image = cv2.imread(os.path.join(args.images, filename))

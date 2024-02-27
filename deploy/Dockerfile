@@ -8,6 +8,7 @@ RUN apt install -y python3 python3-dev python3-pip
 # Install any python packages you need
 RUN pip install --upgrade pip
 RUN pip install shapely opencv-python-headless Flask
+RUN pip install tf-models-official
 RUN pip install --default-timeout=10000 tensorflow[and-cuda]
 
 WORKDIR /app
