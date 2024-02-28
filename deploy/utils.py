@@ -1,7 +1,16 @@
+import typing as tp
+
+import subprocess as sp
+import os
+import logging
+
 import cv2
 import numpy as np
 
+import tensorflow as tf
+
 from shapely.geometry import Polygon
+
 
 def resize_image(im, width, height):
     h, w, c = im.shape
@@ -469,4 +478,38 @@ def parse_digital_detection(boxes, scores, class_names, roi=None):
             text += c_kept_class_names[index]
         text += ';'
     return text, kept_boxes, kept_scores, kept_class_names
-            
+
+
+def set_physical_gpu_memory_limit(memory_limit: int):
+    """
+    Sets the memory limit for all GPUs.
+    
+    Args:
+        memory_limit: the memory limit for each gpu
+    
+    """
+    gpus = tf.config.list_physical_devices('GPU')
+    if not gpus:
+        return
+    # logical_gpus = tf.config.list_logical_devices('GPU')
+    # logging.info(f'Physical GPUs: {len(gpus)},  Logical GPUs: {len(logical_gpus)}')
+    for gpu_idx, gpu in enumerate(gpus):
+        try:
+            tf.config.set_logical_device_configuration(gpu,
+                        [tf.config.LogicalDeviceConfiguration(memory_limit=memory_limit)])
+        except RuntimeError as e:
+            # Virtual devices must be set before GPUs have been initialized
+            logging.error(f'GPU[{gpu_idx}]: {e}')
+
+
+def get_gpu_memory() -> tp.List[int]:
+    """
+    Returns a list of integers representing the amount of free memory on each GPU.
+    
+    Returns:
+        A list of integers
+    """
+    command = "nvidia-smi --query-gpu=memory.free --format=csv"
+    memory_free_info = sp.check_output(command.split()).decode('ascii').split('\n')[:-1][1:]
+    memory_free_values = [int(x.split()[0]) for i, x in enumerate(memory_free_info)]
+    return memory_free_values

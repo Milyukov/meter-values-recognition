@@ -3,6 +3,7 @@ import traceback
 import os
 import cv2
 from collections import OrderedDict
+import logging
 
 import tensorflow as tf
 import numpy as np
@@ -13,10 +14,12 @@ import time
 
 from official.vision.ops.preprocess_ops import resize_and_crop_image
 
+
 HOST = '0.0.0.0'
 PORT_NUMBER = 8080
 
 parent_dir = os.path.dirname(os.path.realpath(__file__))
+
 
 def build_inputs_for_object_detection(image, input_image_size):
   """Builds Object Detection model inputs for serving."""
@@ -27,6 +30,7 @@ def build_inputs_for_object_detection(image, input_image_size):
       aug_scale_min=1.0,
       aug_scale_max=1.0)
   return image
+
 
 class MeterValuesRecognition:
 
@@ -276,8 +280,14 @@ class MeterValuesRecognition:
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.NOTSET)
+    
     os.system('nvidia-smi')
-
+    
+    memory_available = min(get_gpu_memory())
+    logging.info(f'An amount of available memory: {memory_available}')
+    set_physical_gpu_memory_limit(round(memory_available * 0.25))
+    
     app = Flask(__name__)
     ocr = MeterValuesRecognition()
 
