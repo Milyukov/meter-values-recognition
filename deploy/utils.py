@@ -491,8 +491,8 @@ def set_physical_gpu_memory_limit(memory_limit: int):
     gpus = tf.config.list_physical_devices('GPU')
     if not gpus:
         return
-    logical_gpus = tf.config.list_logical_devices('GPU')
-    logging.info(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+    # logical_gpus = tf.config.list_logical_devices('GPU')
+    # logging.info(f'Physical GPUs: {len(gpus)},  Logical GPUs: {len(logical_gpus)}')
     for gpu_idx, gpu in enumerate(gpus):
         try:
             tf.config.set_logical_device_configuration(gpu,

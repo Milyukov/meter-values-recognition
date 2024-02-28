@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.8.0-base-ubuntu20.04
+FROM tensorflow/tensorflow:latest-gpu 
 
 # Install additional packages
 RUN apt -y update
@@ -7,9 +7,9 @@ RUN apt install -y python3 python3-dev python3-pip
 
 # Install any python packages you need
 RUN pip install --upgrade pip
-RUN pip install shapely opencv-python-headless Flask
-RUN pip install tf-models-official
-RUN pip install --default-timeout=10000 tensorflow[and-cuda]
+RUN pip install --ignore-installed shapely opencv-python-headless Flask
+RUN pip install --ignore-installed tf-models-official
+
 
 WORKDIR /app
 
